@@ -84,7 +84,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .add-pair-btn:active{background:#e8f3ff}
 
 /* 出力ボタン */
-.output-bar{position:sticky;bottom:0;background:#fff;border-top:0.5px solid #e0e0e0;padding:10px 12px;display:flex;gap:8px;z-index:40}
+.output-bar{position:sticky;top:48px;background:#fff;border-bottom:0.5px solid #e0e0e0;padding:8px 12px;display:flex;gap:8px;z-index:40}
 .out-btn{flex:1;padding:12px 6px;border:0.5px solid #d8d8d8;border-radius:10px;background:#fff;color:#333;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
 .out-btn.pdf{color:#378ADD;border-color:#b8d8f8}
 .out-btn.upload{color:#854F0B;border-color:#f0d0a0;background:#fffaf0}
@@ -107,7 +107,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .sheet-btn.cancel{background:#f0f0f0;color:#888}
 .sheet-btn:active{opacity:0.75}
 
-.toast{position:fixed;bottom:calc(70px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 input[type=file]{display:none}
 
@@ -117,11 +117,13 @@ input[type=file]{display:none}
 
 /* PDF描画用 */
 #pdfRender{position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;z-index:-1}
-.pdf-page{width:794px;padding:20px 24px 16px;background:#fff}
+.pdf-page{width:794px;padding:40px 48px 32px;background:#fff;display:inline-block}
 .pdf-main-title{text-align:center;font-size:14px;font-weight:700;letter-spacing:0.1em;margin-bottom:2px}
 .pdf-sub-title{text-align:center;font-size:11px;color:#555;margin-bottom:10px}
 .pdf-rec{margin-bottom:14px;border:0.5px solid #bbb}
-.pdf-rec-header{background:#f0f0f0;padding:4px 8px;font-size:10px;font-weight:700;color:#333;border-bottom:0.5px solid #bbb}
+.pdf-rec-header{display:flex;align-items:center;gap:8px;background:#f0f0f0;padding:4px 8px;font-size:10px;font-weight:700;color:#333;border-bottom:0.5px solid #bbb}
+.pdf-rec-header-num{font-weight:700;flex-shrink:0}
+.pdf-rec-header-comment{font-weight:400;font-size:9px;color:#555;flex:1}
 .pdf-photo-title-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid #bbb}
 .pdf-photo-title-cell{text-align:center;font-size:9px;font-weight:700;padding:3px;background:#f8f8f8;color:#555}
 .pdf-photo-title-cell:first-child{border-right:0.5px solid #bbb}
@@ -205,15 +207,21 @@ input[type=file]{display:none}
     <button class="back-btn" id="backBtn">← 検索</button>
     <span class="save-ind" id="saveInd">💾 保存済</span>
   </div>
-  <main>
-    <div id="selectedCount" class="selected-count"></div>
-    <div id="recCards" style="padding:12px 12px 80px"></div>
-  </main>
   <div class="output-bar">
     <button class="out-btn pdf" id="pdfBtn">📄 PDF</button>
     <button class="out-btn upload" id="uploadBtn">🔗 Airtable</button>
     <button class="out-btn sheets" id="sheetsBtn">📊 CSV</button>
   </div>
+  <main>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0">
+      <span id="selectedCount" style="font-size:11px;color:#888"></span>
+      <div style="display:flex;gap:6px">
+        <button id="selectAllBtn" style="font-size:11px;padding:4px 10px;border:0.5px solid #378ADD;border-radius:6px;background:#fff;color:#378ADD;cursor:pointer">全選択</button>
+        <button id="deselectAllBtn" style="font-size:11px;padding:4px 10px;border:0.5px solid #ccc;border-radius:6px;background:#fff;color:#888;cursor:pointer">全解除</button>
+      </div>
+    </div>
+    <div id="recCards" style="padding:12px"></div>
+  </main>
 </div>
 
 <!-- 写真シート -->
@@ -244,6 +252,7 @@ const TBL_SHITEKI   = 'tbl231zvyOlWS6iCs';
 let items = [];      // 取得した指摘（表示・編集用）
 let activeSlot = null;
 let saveTimer = null;
+let selectedKensaName = '検査指摘写真報告書'; // 検索時に選択した検査名
 
 // ===== ユーティリティ =====
 function toast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
@@ -318,6 +327,7 @@ document.getElementById('searchBtn').onclick=async()=>{
   if(!s.token){toast('設定が必要です');showScreen('settingsScreen');return}
 
   const kensaName=document.getElementById('filterKensaName').value;
+  selectedKensaName = kensaName || '検査指摘写真報告書';
   const dateFrom=document.getElementById('filterDateFrom').value;
   const dateTo=document.getElementById('filterDateTo').value;
   const progress=document.getElementById('filterProgress').value;
@@ -365,12 +375,13 @@ document.getElementById('searchBtn').onclick=async()=>{
       return{
         recId:r.id,
         selected: local[r.id]?.selected!==undefined ? local[r.id].selected : true,
-        kensaName:f['検査名']||'',
+        kensaName: Array.isArray(f['検査名']) ? f['検査名'][0] : (f['検査名']||''),
         progress:f['進捗']||'',
         shitekiContent:f['指摘内容']||'',
         zeseiContent:f['是正内容']||'',
         gyosha:f['業者']||'',
         kensaDate:f['検査日']||'',
+        headerComment:local[r.id]?.headerComment||'',
         pairs,
       };
     });
@@ -394,7 +405,7 @@ function saveLocal(){
     try{
       const local=loadLocal();
       items.forEach(item=>{
-        local[item.recId]={selected:item.selected,pairs:item.pairs};
+        local[item.recId]={selected:item.selected,pairs:item.pairs,headerComment:item.headerComment||''};
       });
       localStorage.setItem(LOCAL_KEY,JSON.stringify(local));
       document.getElementById('saveInd').textContent='💾 保存済';
@@ -412,21 +423,27 @@ function renderReportScreen(){
     const card=document.createElement('div');
     card.className='rec-card';
 
-    // ヘッダー（チェック＋検査名）
+    // ヘッダー（チェック＋No.番号＋フリーコメント）
     const hdr=document.createElement('div');
     hdr.className='rec-card-header';
     const chk=document.createElement('div');
     chk.className='rec-checkbox'+(item.selected?' checked':'');
     chk.textContent=item.selected?'✓':'';
     chk.onclick=()=>{item.selected=!item.selected;chk.className='rec-checkbox'+(item.selected?' checked':'');chk.textContent=item.selected?'✓':'';updateSelectedCount();saveLocal()};
-    const titleEl=document.createElement('div');
-    titleEl.className='rec-card-title';
-    titleEl.textContent=`${itemIdx+1}. ${item.kensaName} ${item.shitekiContent}`;
+    const numEl=document.createElement('span');
+    numEl.style.cssText='font-size:12px;font-weight:700;flex-shrink:0';
+    numEl.textContent=`No.${itemIdx+1}`;
+    const cmtInput=document.createElement('input');
+    cmtInput.type='text';
+    cmtInput.placeholder='コメント（任意）';
+    cmtInput.value=item.headerComment||'';
+    cmtInput.style.cssText='flex:1;font-size:12px;border:none;outline:none;background:transparent;color:#333;min-width:0';
+    cmtInput.oninput=()=>{item.headerComment=cmtInput.value;saveLocal()};
     const bdg=document.createElement('span');
     bdg.className='rec-badge';
     bdg.style.background=progressColor(item.progress);
     bdg.textContent=item.progress;
-    hdr.appendChild(chk);hdr.appendChild(titleEl);if(item.progress)hdr.appendChild(bdg);
+    hdr.appendChild(chk);hdr.appendChild(numEl);hdr.appendChild(cmtInput);if(item.progress)hdr.appendChild(bdg);
     card.appendChild(hdr);
 
     // 是正前・是正後タイトル行
@@ -439,6 +456,21 @@ function renderReportScreen(){
     item.pairs.forEach((pair,pairIdx)=>{
       const pairDiv=document.createElement('div');
       pairDiv.className='pair-row';
+
+      // ペア行ヘッダー（削除ボタン）
+      if(item.pairs.length>1){
+        const pairHdr=document.createElement('div');
+        pairHdr.style.cssText='display:flex;justify-content:flex-end;padding:2px 8px;background:#fafafa;border-bottom:0.5px solid #f0f0f0';
+        const delRow=document.createElement('button');
+        delRow.style.cssText='font-size:10px;color:#cc4444;background:none;border:none;cursor:pointer;padding:2px 4px';
+        delRow.textContent='🗑 この行を削除';
+        delRow.onclick=()=>{
+          item.pairs.splice(pairIdx,1);
+          renderReportScreen();saveLocal();
+        };
+        pairHdr.appendChild(delRow);
+        pairDiv.appendChild(pairHdr);
+      }
 
       // 写真グリッド
       const grid=document.createElement('div');
@@ -503,6 +535,8 @@ function updateSelectedCount(){
 }
 
 document.getElementById('backBtn').onclick=()=>showScreen('searchScreen');
+document.getElementById('selectAllBtn').onclick=()=>{items.forEach(i=>i.selected=true);renderReportScreen();saveLocal()};
+document.getElementById('deselectAllBtn').onclick=()=>{items.forEach(i=>i.selected=false);renderReportScreen();saveLocal()};
 
 // ===== 写真シート =====
 function openPhotoSheet(itemIdx,pairIdx,side){
@@ -572,18 +606,20 @@ document.getElementById('uploadBtn').onclick=async()=>{
 document.getElementById('sheetsBtn').onclick=()=>{
   const selected=items.filter(i=>i.selected);
   if(selected.length===0){toast('出力対象を選択してください');return}
+  const kensaName=selectedKensaName;
   let csv='\uFEFF';
-  csv+=`検査指摘写真報告書,${todayJP()}\n\n`;
+  csv+=`${kensaName},${todayJP()}\n\n`;
   csv+='No.,検査名,検査日,進捗,業者,指摘内容,是正内容,是正前写真URL,是正後写真URL\n';
   selected.forEach((item,i)=>{
     const atBUrl=item.pairs[0]?.beforeIsUrl?item.pairs[0].before:'';
     const atAUrl=item.pairs[0]?.afterIsUrl?item.pairs[0].after:'';
-    csv+=`${i+1},"${item.kensaName}","${item.kensaDate}","${item.progress}","${item.gyosha}","${item.shitekiContent.replace(/"/g,'""')}","${item.zeseiContent.replace(/"/g,'""')}","${atBUrl}","${atAUrl}"\n`;
+    csv+=`${i+1},"${selectedKensaName}","${item.kensaDate}","${item.progress}","${item.gyosha}","${item.shitekiContent.replace(/"/g,'""')}","${item.zeseiContent.replace(/"/g,'""')}","${atBUrl}","${atAUrl}"\n`;
   });
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`検査指摘_${todayStr()}.csv`;a.click();
+  const safeKensa=kensaName.replace(/[\\/:*?"<>|　]/g,'_');
+  a.href=url;a.download=`${safeKensa}_${todayStr()}.csv`;a.click();
   URL.revokeObjectURL(url);
   toast('CSVを保存しました');
 };
@@ -608,7 +644,7 @@ document.getElementById('pdfBtn').onclick=async()=>{
     // 写真高さ≒180px、コメント≒20px、ヘッダー≒24px、タイトル行≒20px
     // A4高さ1123px、上下余白計56px → 有効1067px
     // 1対 = 224px、1ページ約4対
-    const PAIRS_PER_PAGE=4;
+    const PAIRS_PER_PAGE=3;
 
     // 全ペアを平坦化
     const allPairs=[];
@@ -622,7 +658,7 @@ document.getElementById('pdfBtn').onclick=async()=>{
     const pages=[];
     for(let i=0;i<allPairs.length;i+=PAIRS_PER_PAGE) pages.push(allPairs.slice(i,i+PAIRS_PER_PAGE));
 
-    const kensaNameForTitle=selected[0]?.kensaName||'検査';
+    const kensaNameForTitle=selectedKensaName;
     const today=todayJP();
 
     for(let pi=0;pi<pages.length;pi++){
@@ -630,49 +666,76 @@ document.getElementById('pdfBtn').onclick=async()=>{
       render.innerHTML='';
       const pageDiv=document.createElement('div');
       pageDiv.className='pdf-page';
-      pageDiv.innerHTML=`
-        <div class="pdf-main-title">是　正　写　真</div>
-        <div class="pdf-sub-title">${kensaNameForTitle}　${today}</div>`;
 
-      // 指摘ごとにグループ
+      // ページヘッダー
+      const mainTitle=document.createElement('div');
+      mainTitle.className='pdf-main-title';
+      mainTitle.textContent='是　正　写　真';
+      pageDiv.appendChild(mainTitle);
+
+      const subTitle=document.createElement('div');
+      subTitle.className='pdf-sub-title';
+      subTitle.textContent=`${kensaNameForTitle}　${today}`;
+      pageDiv.appendChild(subTitle);
+
+      // 1ページ目かどうかで「是正前/是正後」タイトル行を最初の指摘にのみ表示
+      const isFirstPage=(pi===0);
       let currentRecId=null;
       let recDiv=null;
 
       pageRows.forEach(row=>{
-        const{item,pair,isFirst}=row;
+        const{item,pair}=row;
+        const globalIdx=selected.indexOf(item)+1;
+
+        // 新しい指摘 → 指摘ブロック作成
         if(item.recId!==currentRecId){
           currentRecId=item.recId;
           recDiv=document.createElement('div');
           recDiv.className='pdf-rec';
-          // 指摘ヘッダー
+
+          // ヘッダー：No.番号 ＋ フリーコメント欄
           const recHdr=document.createElement('div');
           recHdr.className='pdf-rec-header';
-          recHdr.textContent=`${item.shitekiContent}`;
+          const numEl=document.createElement('span');
+          numEl.className='pdf-rec-header-num';
+          numEl.textContent=`No.${globalIdx}`;
+          const cmtEl=document.createElement('span');
+          cmtEl.className='pdf-rec-header-comment';
+          cmtEl.textContent=item.headerComment||'';
+          recHdr.appendChild(numEl);
+          recHdr.appendChild(cmtEl);
           recDiv.appendChild(recHdr);
-          // 是正前・是正後タイトル行
+
+          // 「是正前/是正後」タイトル行：全指摘ブロックに付与
           const titleRow=document.createElement('div');
           titleRow.className='pdf-photo-title-row';
-          titleRow.innerHTML='<div class="pdf-photo-title-cell">是　正　前</div><div class="pdf-photo-title-cell">是　正　後</div>';
+          const t1=document.createElement('div');t1.className='pdf-photo-title-cell';t1.textContent='是正前';
+          const t2=document.createElement('div');t2.className='pdf-photo-title-cell';t2.textContent='是正後';
+          titleRow.appendChild(t1);titleRow.appendChild(t2);
           recDiv.appendChild(titleRow);
           pageDiv.appendChild(recDiv);
         }
 
-        // 写真行
+        // 写真行（aspect-ratioで自然なサイズ、引き伸ばしなし）
         const pairDiv=document.createElement('div');
         pairDiv.className='pdf-pair';
+
         const photosRow=document.createElement('div');
         photosRow.className='pdf-photos-row';
-
         ['before','after'].forEach(side=>{
           const cell=document.createElement('div');
           cell.className='pdf-photo-cell';
           if(pair[side]){
             const img=document.createElement('img');
-            img.src=pair[side];img.crossOrigin='anonymous';
+            img.src=pair[side];
+            img.crossOrigin='anonymous';
             img.style.cssText='width:100%;aspect-ratio:4/3;object-fit:cover;display:block';
             cell.appendChild(img);
           }else{
-            cell.innerHTML='<div class="pdf-photo-empty">（写真なし）</div>';
+            const empty=document.createElement('div');
+            empty.className='pdf-photo-empty';
+            empty.textContent='（写真なし）';
+            cell.appendChild(empty);
           }
           photosRow.appendChild(cell);
         });
@@ -691,16 +754,30 @@ document.getElementById('pdfBtn').onclick=async()=>{
         recDiv.appendChild(pairDiv);
       });
 
-      pageDiv.innerHTML+=`<div class="pdf-page-num">${pi+1} / ${pages.length}</div>`;
+      // ページ番号
+      const pageNum=document.createElement('div');
+      pageNum.className='pdf-page-num';
+      pageNum.textContent=`${pi+1} / ${pages.length}`;
+      pageDiv.appendChild(pageNum);
+
       render.appendChild(pageDiv);
 
       const canvas=await html2canvas(pageDiv,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false});
+      const isLastPage=(pi===pages.length-1);
       if(pi>0) doc.addPage();
-      doc.addImage(canvas.toDataURL('image/jpeg',0.85),'JPEG',0,0,pw,ph);
+      if(isLastPage && pageRows.length < PAIRS_PER_PAGE){
+        // 最終ページは実際の高さに合わせてPDFに配置（引き伸ばさない）
+        const ratio=canvas.width/canvas.height;
+        const imgH=pw/ratio;
+        doc.addImage(canvas.toDataURL('image/jpeg',0.85),'JPEG',0,0,pw,imgH);
+      }else{
+        doc.addImage(canvas.toDataURL('image/jpeg',0.85),'JPEG',0,0,pw,ph);
+      }
     }
 
     render.innerHTML='';
-    doc.save(`${kensaNameForTitle}_${todayStr()}.pdf`);
+    const safeTitle=(kensaNameForTitle).replace(/[\\/:*?"<>|　]/g,'_');
+    doc.save(`${safeTitle}_${todayStr()}.pdf`);
     toast('PDFを保存しました ✓');
   }catch(e){
     toast('PDF生成エラー: '+e.message);
@@ -711,6 +788,15 @@ document.getElementById('pdfBtn').onclick=async()=>{
 };
 
 // ===== 起動 =====
+// URLパラメータにtokenがあれば自動保存
+const _urlParams=new URLSearchParams(window.location.search);
+const _urlToken=_urlParams.get('token');
+if(_urlToken){
+  saveSettings({token:_urlToken});
+  // URLからtokenを除去（セキュリティ対策）
+  const _cleanUrl=window.location.pathname;
+  window.history.replaceState({},'',_cleanUrl);
+}
 const _s=loadSettings();
 if(!_s.token){
   showScreen('settingsScreen');
