@@ -794,15 +794,18 @@ const _urlToken=_urlParams.get('token');
 if(_urlToken){
   saveSettings({token:_urlToken});
   // URLからtokenを除去（セキュリティ対策）
-  const _cleanUrl=window.location.pathname;
-  window.history.replaceState({},'',_cleanUrl);
-}
-const _s=loadSettings();
-if(!_s.token){
-  showScreen('settingsScreen');
-}else{
+  window.history.replaceState({},'',window.location.pathname);
+  // 自動的に検索画面へ
   loadKensaNames();
   showScreen('searchScreen');
+}else{
+  const _s=loadSettings();
+  if(!_s.token){
+    showScreen('settingsScreen');
+  }else{
+    loadKensaNames();
+    showScreen('searchScreen');
+  }
 }
 </script>
 </body>
