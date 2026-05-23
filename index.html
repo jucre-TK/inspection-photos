@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="検査写真">
+<title>各種検査指摘 写真報告書</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
+.top-header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:0.5px solid #e0e0e0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;min-height:48px}
+.top-header h1{font-size:15px;font-weight:600;color:#1a1a1a}
+.back-btn{font-size:14px;color:#378ADD;cursor:pointer;background:none;border:none;padding:4px 0}
+.screen{display:none}
+.screen.active{display:block}
+
+/* 設定画面 */
+.settings-wrap{padding:16px;max-width:480px;margin:0 auto}
+.field-group{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;margin-bottom:12px;overflow:hidden}
+.field-group label{display:block;font-size:11px;font-weight:600;color:#888;padding:10px 14px 0;letter-spacing:0.05em}
+.field-group input{width:100%;font-size:14px;padding:6px 14px 10px;border:none;outline:none;color:#1a1a1a;background:transparent}
+.field-group input::placeholder{color:#bbb}
+.primary-btn{width:100%;padding:14px;border:none;border-radius:12px;background:#378ADD;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px}
+.primary-btn:active{opacity:0.85}
+.note{font-size:11px;color:#aaa;text-align:center;padding:4px}
+
+/* 検索画面 */
+#searchScreen main{padding:12px;max-width:480px;margin:0 auto}
+.search-card{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;padding:14px;margin-bottom:12px}
+.search-card h3{font-size:13px;font-weight:600;color:#555;margin-bottom:10px}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.filter-grid.full{grid-template-columns:1fr}
+.filter-input{padding:8px 10px;border:0.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;color:#1a1a1a;background:#fafafa;width:100%}
+.filter-input:focus{border-color:#378ADD;background:#fff}
+.filter-label{font-size:10px;font-weight:600;color:#aaa;margin-bottom:4px;letter-spacing:0.05em}
+.date-row{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:8px}
+.date-sep{font-size:12px;color:#aaa;text-align:center}
+.search-btn{width:100%;padding:12px;border:none;border-radius:10px;background:#378ADD;color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.search-btn:active{opacity:0.85}
+.search-btn.loading{opacity:0.6;pointer-events:none}
+
+.result-list{display:flex;flex-direction:column;gap:8px}
+.result-item{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.result-item:active{background:#f8f8f8}
+.result-icon{width:40px;height:40px;border-radius:10px;background:#f0f7ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.result-info{flex:1;min-width:0}
+.result-title{font-size:14px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-meta{font-size:11px;color:#aaa;margin-top:2px}
+.result-badges{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+.badge-blue{background:#dbeeff;color:#185FA5}
+.badge-green{background:#d4f0e4;color:#0F6E56}
+.badge-amber{background:#faeeda;color:#854F0B}
+.badge-gray{background:#f0f0ec;color:#555}
+.result-arrow{color:#ccc;font-size:18px;flex-shrink:0}
+
+.empty-state{text-align:center;padding:48px 24px;color:#bbb}
+.empty-state .emoji{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:14px;line-height:1.6}
+
+/* 編集画面 */
+#editScreen main{padding:12px;max-width:480px;margin:0 auto}
+.edit-header-right{display:flex;align-items:center;gap:8px}
+.save-ind{font-size:10px;color:#aaa;white-space:nowrap}
+.save-ind.saved{color:#1D9E75}
+.layout-sel{font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#333;appearance:none;-webkit-appearance:none;padding-right:20px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center}
+
+.info-card{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;margin-bottom:10px;overflow:hidden}
+.info-row{padding:8px 14px;border-bottom:0.5px solid #f0f0f0;display:flex;align-items:baseline;gap:8px}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.05em;flex-shrink:0;width:60px}
+.info-value{font-size:13px;color:#1a1a1a;flex:1}
+.at-badge{display:inline-block;font-size:8px;background:#faeeda;color:#854F0B;padding:1px 4px;border-radius:3px;font-weight:600;margin-left:4px}
+.progress-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+
+.pair-card{background:#fff;border-radius:10px;border:0.5px solid #e0e0e0;margin-bottom:10px;overflow:hidden}
+.pair-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fafafa;border-bottom:0.5px solid #e8e8e8}
+.pair-num{font-size:12px;font-weight:600;color:#555}
+.photos-row{display:grid;grid-template-columns:1fr 1fr}
+.photo-slot{position:relative;aspect-ratio:4/3;cursor:pointer;overflow:hidden;background:#f8f8f8;display:flex;align-items:center;justify-content:center}
+.photo-slot:first-child{border-right:0.5px solid #e8e8e8}
+.photo-slot img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-empty{display:flex;flex-direction:column;align-items:center;gap:5px}
+.photo-empty .icon{font-size:22px;color:#ddd}
+.photo-empty span{font-size:10px;color:#ccc}
+.photo-badge{position:absolute;bottom:6px;left:6px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px}
+.badge-b{background:#dbeeff;color:#185FA5}
+.badge-a{background:#d4f0e4;color:#0F6E56}
+.photo-check{position:absolute;top:5px;right:5px;width:18px;height:18px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.at-photo-badge{position:absolute;top:5px;left:5px;font-size:8px;background:#faeeda;color:#854F0B;padding:1px 4px;border-radius:3px;font-weight:700}
+.comment-wrap{padding:5px 12px;border-top:0.5px solid #f0f0f0}
+.comment-wrap input{width:100%;font-size:11px;border:none;outline:none;color:#333;background:transparent}
+.comment-wrap input::placeholder{color:#ccc}
+
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.action-row.full{grid-template-columns:1fr}
+.act-btn{padding:13px 8px;border:0.5px solid #d8d8d8;border-radius:10px;background:#fff;color:#333;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.act-btn.pdf{color:#378ADD;border-color:#b8d8f8}
+.act-btn.upload{color:#854F0B;border-color:#f0d0a0;background:#fffaf0}
+.act-btn.sheets{color:#1D9E75;border-color:#b0e0cc}
+.act-btn:active{transform:scale(0.97)}
+.act-btn.loading{opacity:0.6;pointer-events:none}
+
+/* モーダル */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.overlay.open{opacity:1;pointer-events:auto}
+.sheet{background:#fff;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));width:100%;max-width:480px;transform:translateY(20px);transition:transform 0.2s}
+.overlay.open .sheet{transform:translateY(0)}
+.sheet-title{font-size:13px;font-weight:600;color:#888;text-align:center;margin-bottom:14px}
+.sheet-btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sheet-btn.cam{background:#dbeeff;color:#185FA5}
+.sheet-btn.gal{background:#d4f0e4;color:#0F6E56}
+.sheet-btn.del{background:#fff0f0;color:#cc3333}
+.sheet-btn.cancel{background:#f0f0f0;color:#888}
+.sheet-btn:active{opacity:0.75}
+
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+.spinner.blue{border-color:rgba(55,138,221,0.3);border-top-color:#378ADD}
+@keyframes spin{to{transform:rotate(360deg)}}
+input[type=file]{display:none}
+
+#pdfRender{position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;z-index:-1}
+.pdf-page{width:794px;min-height:1123px;padding:36px 40px;display:flex;flex-direction:column;gap:10px;background:#fff}
+.pdf-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #333;padding-bottom:6px;margin-bottom:4px}
+.pdf-title{font-size:16px;font-weight:700;color:#111}
+.pdf-meta{font-size:9px;color:#666;margin-top:3px;line-height:1.6}
+.pdf-info{font-size:10px;color:#777;white-space:nowrap;padding-top:2px}
+.pdf-pair{border:0.5px solid #ccc;border-radius:3px;overflow:hidden;flex:1}
+.pdf-pair-label{background:#f5f5f5;padding:3px 8px;font-size:10px;font-weight:700;color:#555;border-bottom:0.5px solid #ddd}
+.pdf-photos{display:grid;grid-template-columns:1fr 1fr}
+.pdf-photo-box{position:relative;border-right:0.5px solid #ddd;display:flex;flex-direction:column}
+.pdf-photo-box:last-child{border-right:none}
+.pdf-photo-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.pdf-photo-empty{width:100%;aspect-ratio:4/3;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb}
+.pdf-badge{position:absolute;top:4px;left:4px;font-size:8px;font-weight:700;padding:2px 5px;border-radius:2px}
+.pdf-badge-b{background:#dbeeff;color:#185FA5}
+.pdf-badge-a{background:#d4f0e4;color:#0F6E56}
+.pdf-comment{padding:3px 8px;font-size:9px;color:#555;border-top:0.5px solid #eee;background:#fafafa;min-height:16px}
+</style>
+</head>
+<body>
+
+<!-- 設定画面 -->
+<div id="settingsScreen" class="screen">
+  <div class="top-header"><h1>⚙️ Airtable設定</h1></div>
+  <div class="settings-wrap">
+    <div class="field-group">
+      <label>PERSONAL ACCESS TOKEN</label>
+      <input type="password" id="settingToken" placeholder="patXXXXXXXXX">
+    </div>
+    <div class="field-group">
+      <label>BASE ID</label>
+      <input type="text" id="settingBase" placeholder="app8zPFrrXIWNhYW5">
+    </div>
+    <div class="field-group">
+      <label>テーブル名</label>
+      <input type="text" id="settingTable" placeholder="各種検査指摘">
+    </div>
+    <button class="primary-btn" id="saveSettingsBtn">保存して開始</button>
+    <p class="note">APIキーはこの端末のみに保存されます</p>
+  </div>
+</div>
+
+<!-- 検索画面 -->
+<div id="searchScreen" class="screen">
+  <div class="top-header">
+    <h1>📋 検査指摘 写真報告書</h1>
+    <button class="back-btn" id="settingsBtn" style="color:#aaa;font-size:12px">⚙️</button>
+  </div>
+  <main>
+    <div class="search-card">
+      <h3>🔍 絞り込み条件</h3>
+
+      <div class="filter-label">検査名</div>
+      <input type="text" class="filter-input" id="filterKensaName" placeholder="例：配筋検査" style="margin-bottom:10px">
+
+      <div class="filter-label">検査日（範囲）</div>
+      <div class="date-row" style="margin-bottom:10px">
+        <input type="date" class="filter-input" id="filterDateFrom">
+        <div class="date-sep">〜</div>
+        <input type="date" class="filter-input" id="filterDateTo">
+      </div>
+
+      <div class="filter-grid" style="margin-bottom:10px">
+        <div>
+          <div class="filter-label">進捗</div>
+          <select class="filter-input" id="filterProgress">
+            <option value="">すべて</option>
+            <option>是正中</option>
+            <option>業振済</option>
+            <option>完了</option>
+            <option>確認済</option>
+            <option>仕様</option>
+            <option>施工前</option>
+            <option>保修中</option>
+            <option>要注意</option>
+            <option>業者変更</option>
+            <option>再補修</option>
+            <option>追加</option>
+          </select>
+        </div>
+        <div>
+          <div class="filter-label">業者</div>
+          <input type="text" class="filter-input" id="filterGyosha" placeholder="業者名">
+        </div>
+      </div>
+
+      <button class="search-btn" id="searchBtn">
+        <span class="spinner blue" id="searchSpinner" style="display:none"></span>
+        Airtableから取得
+      </button>
+    </div>
+
+    <div id="resultList"></div>
+  </main>
+</div>
+
+<!-- 編集画面 -->
+<div id="editScreen" class="screen">
+  <div class="top-header">
+    <button class="back-btn" id="backBtn">← 一覧</button>
+    <div class="edit-header-right">
+      <span class="save-ind saved" id="saveInd">💾 保存済</span>
+      <select class="layout-sel" id="layoutSel">
+        <option value="3">3件/頁</option>
+        <option value="2">2件/頁</option>
+        <option value="1">1件/頁</option>
+      </select>
+    </div>
+  </div>
+  <main>
+    <!-- Airtable情報表示 -->
+    <div class="info-card" id="infoCard"></div>
+
+    <div id="pairsContainer"></div>
+
+    <div class="action-row">
+      <button class="act-btn pdf" id="pdfBtn">📄 PDF保存</button>
+      <button class="act-btn upload" id="uploadBtn">🔗 Airtableに保存</button>
+    </div>
+    <div class="action-row full">
+      <button class="act-btn sheets" id="sheetsBtn">📊 Sheetsに出力</button>
+    </div>
+  </main>
+</div>
+
+<!-- 写真シート -->
+<div class="overlay" id="photoOverlay">
+  <div class="sheet">
+    <div class="sheet-title" id="sheetTitle">写真を追加</div>
+    <button class="sheet-btn cam" id="camBtn">📷 カメラで撮影</button>
+    <button class="sheet-btn gal" id="galBtn">🖼 ライブラリから選択</button>
+    <button class="sheet-btn del" id="delPhotoBtn" style="display:none">🗑 写真を削除</button>
+    <button class="sheet-btn cancel" id="photoCancelBtn">キャンセル</button>
+  </div>
+</div>
+
+<input type="file" id="fileCamera" accept="image/*" capture="environment">
+<input type="file" id="fileGallery" accept="image/*">
+<div id="pdfRender"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+const SETTINGS_KEY = 'genba_shared_settings_v1';
+const RECORDS_KEY  = 'genba_shared_records_v1';
+
+let records = [];      // Airtableから取得したレコード一覧（検索結果）
+let currentRec = null; // 編集中レコード
+let activeSlot  = null;
+let saveTimer   = null;
+
+// ===== ユーティリティ =====
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayJP() {
+  return new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ===== 設定 =====
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+
+document.getElementById('saveSettingsBtn').onclick = () => {
+  const token = document.getElementById('settingToken').value.trim();
+  const base  = document.getElementById('settingBase').value.trim();
+  const table = document.getElementById('settingTable').value.trim();
+  if (!token||!base||!table) { toast('すべて入力してください'); return; }
+  saveSettings({ token, base, table });
+  showScreen('searchScreen');
+};
+document.getElementById('settingsBtn').onclick = () => {
+  const s = loadSettings();
+  document.getElementById('settingToken').value = s.token||'';
+  document.getElementById('settingBase').value  = s.base||'';
+  document.getElementById('settingTable').value = s.table||'';
+  showScreen('settingsScreen');
+};
+
+// ===== Airtable API =====
+async function atFetch(path, opts={}) {
+  const s = loadSettings();
+  const url = `https://api.airtable.com/v0/${s.base}/${encodeURIComponent(s.table)}${path}`;
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Authorization':`Bearer ${s.token}`, 'Content-Type':'application/json', ...(opts.headers||{}) }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// ===== 写真圧縮 =====
+function compressImage(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.70));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== 進捗バッジ色 =====
+function progressColor(p) {
+  const map = {
+    '是正中':'badge-blue','業振済':'badge-amber','完了':'badge-green',
+    '確認済':'badge-green','仕様':'badge-gray','施工前':'badge-gray',
+    '保修中':'badge-amber','要注意':'badge-amber','業者変更':'badge-amber',
+    '再補修':'badge-blue','追加':'badge-blue'
+  };
+  return map[p] || 'badge-gray';
+}
+
+// ===== 検索・取得 =====
+document.getElementById('searchBtn').onclick = async () => {
+  const s = loadSettings();
+  if (!s.token) { toast('設定が必要です'); showScreen('settingsScreen'); return; }
+
+  const kensaName = document.getElementById('filterKensaName').value.trim();
+  const dateFrom  = document.getElementById('filterDateFrom').value;
+  const dateTo    = document.getElementById('filterDateTo').value;
+  const progress  = document.getElementById('filterProgress').value;
+  const gyosha    = document.getElementById('filterGyosha').value.trim();
+
+  // filterByFormula構築
+  const conds = [];
+  if (kensaName) conds.push(`SEARCH("${kensaName}",{検査名})`);
+  if (progress)  conds.push(`{進捗}="${progress}"`);
+  if (gyosha)    conds.push(`SEARCH("${gyosha}",{業者})`);
+  if (dateFrom)  conds.push(`IS_AFTER({検査日},"${dateFrom}")`);
+  if (dateTo)    conds.push(`IS_BEFORE({検査日},"${dateTo}")`);
+
+  const formula = conds.length > 1 ? `AND(${conds.join(',')})` : conds[0] || '';
+  let url = '?pageSize=100&sort[0][field]=検査日&sort[0][direction]=desc';
+  if (formula) url += `&filterByFormula=${encodeURIComponent(formula)}`;
+
+  const btn = document.getElementById('searchBtn');
+  const sp  = document.getElementById('searchSpinner');
+  btn.classList.add('loading');
+  sp.style.display = 'inline-block';
+  btn.lastChild.textContent = ' 取得中…';
+
+  try {
+    const data = await atFetch(url);
+    records = (data.records || []).map(r => ({
+      id: r.id,
+      fields: r.fields,
+      // 追記データ（写真・コメント）はローカル保存
+      localBefore: null,
+      localAfter:  null,
+      beforeComment: '',
+      afterComment:  '',
+    }));
+
+    // ローカル保存から復元
+    try {
+      const saved = JSON.parse(localStorage.getItem(RECORDS_KEY) || '{}');
+      records.forEach(r => {
+        if (saved[r.id]) {
+          r.localBefore    = saved[r.id].localBefore    || null;
+          r.localAfter     = saved[r.id].localAfter     || null;
+          r.beforeComment  = saved[r.id].beforeComment  || '';
+          r.afterComment   = saved[r.id].afterComment   || '';
+        }
+      });
+    } catch(e) {}
+
+    renderResults();
+    if (records.length === 0) toast('条件に合うレコードが見つかりません');
+    else toast(`${records.length}件取得しました`);
+  } catch(e) {
+    toast('取得エラー: ' + e.message);
+  } finally {
+    btn.classList.remove('loading');
+    sp.style.display = 'none';
+    btn.lastChild.textContent = 'Airtableから取得';
+  }
+};
+
+function renderResults() {
+  const list = document.getElementById('resultList');
+  if (records.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="emoji">🔍</div><p>条件を入力して<br>「Airtableから取得」してください</p></div>`;
+    return;
+  }
+  list.innerHTML = '';
+  records.forEach(r => {
+    const f = r.fields;
+    const hasLocalB = !!r.localBefore;
+    const hasLocalA = !!r.localAfter;
+    const hasAtB = !!(f['指摘写真'] && f['指摘写真'].length > 0);
+    const hasAtA = !!(f['是正写真'] && f['是正写真'].length > 0);
+    const el = document.createElement('div');
+    el.className = 'result-item';
+    el.innerHTML = `
+      <div class="result-icon">📷</div>
+      <div class="result-info">
+        <div class="result-title">${f['指摘内容']||'（内容なし）'}</div>
+        <div class="result-meta">${f['検査名']||''} ${f['検査日']||''}</div>
+        <div class="result-badges">
+          ${f['進捗']?`<span class="badge ${progressColor(f['進捗'])}">${f['進捗']}</span>`:''}
+          ${f['業者']?`<span class="badge badge-gray">${f['業者']}</span>`:''}
+          ${(hasAtB||hasLocalB)?`<span class="badge badge-blue">指摘写真${hasAtB?'(AT)':'(local)'}</span>`:''}
+          ${(hasAtA||hasLocalA)?`<span class="badge badge-green">是正写真${hasAtA?'(AT)':'(local)'}</span>`:''}
+        </div>
+      </div>
+      <div class="result-arrow">›</div>`;
+    el.onclick = () => openRecord(r.id);
+    list.appendChild(el);
+  });
+}
+
+// ===== 編集画面 =====
+function openRecord(id) {
+  currentRec = records.find(r => r.id === id);
+  if (!currentRec) return;
+  renderInfoCard();
+  renderPair();
+  setSaveInd('saved');
+  showScreen('editScreen');
+}
+
+function setSaveInd(s) {
+  const el = document.getElementById('saveInd');
+  el.textContent = s==='saving' ? '⏳ 保存中…' : '💾 保存済';
+  el.classList.toggle('saved', s==='saved');
+}
+
+function saveLocal() {
+  clearTimeout(saveTimer);
+  setSaveInd('saving');
+  saveTimer = setTimeout(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(RECORDS_KEY) || '{}');
+      saved[currentRec.id] = {
+        localBefore:   currentRec.localBefore,
+        localAfter:    currentRec.localAfter,
+        beforeComment: currentRec.beforeComment,
+        afterComment:  currentRec.afterComment,
+      };
+      localStorage.setItem(RECORDS_KEY, JSON.stringify(saved));
+      setSaveInd('saved');
+    } catch(e) { toast('保存失敗：容量不足の可能性があります'); }
+  }, 800);
+}
+
+function renderInfoCard() {
+  const f = currentRec.fields;
+  const card = document.getElementById('infoCard');
+  const rows = [
+    ['検査名', f['検査名']||'—'],
+    ['検査日', f['検査日']||'—'],
+    ['指摘内容', f['指摘内容']||'—'],
+    ['是正内容', f['是正内容']||'—'],
+    ['進捗', f['進捗'] ? `<span class="progress-badge ${progressColor(f['進捗'])}" style="background:inherit">${f['進捗']}</span>` : '—'],
+    ['業者', f['業者']||'—'],
+    ['その他備考', f['その他備考']||'—'],
+  ];
+  card.innerHTML = rows.map(([l,v]) => `
+    <div class="info-row">
+      <span class="info-label">${l}</span>
+      <span class="info-value">${v}<span class="at-badge">Airtable</span></span>
+    </div>`).join('');
+}
+
+function renderPair() {
+  const c = document.getElementById('pairsContainer');
+  const r = currentRec;
+  const f = r.fields;
+
+  const atBefore = f['指摘写真'] && f['指摘写真'][0] ? f['指摘写真'][0].url : null;
+  const atAfter  = f['是正写真'] && f['是正写真'][0] ? f['是正写真'][0].url : null;
+  const showBefore = r.localBefore || atBefore;
+  const showAfter  = r.localAfter  || atAfter;
+  const isLocalB   = !!r.localBefore;
+  const isLocalA   = !!r.localAfter;
+
+  const mkSlot = (img, isLocal, side) => {
+    const badge = side==='before' ? 'badge-b' : 'badge-a';
+    const label = side==='before' ? '指摘時'  : '是正後';
+    if (img) return `
+      <img src="${img}" alt="${label}">
+      ${!isLocal ? `<span class="at-photo-badge">Airtable</span>` : ''}
+      <span class="photo-badge ${badge}">${label}</span>
+      <span class="photo-check">✓</span>`;
+    return `<div class="photo-empty"><div class="icon">📷</div><span>${label}</span></div>
+      <span class="photo-badge ${badge}">${label}</span>`;
+  };
+
+  c.innerHTML = `
+    <div class="pair-card">
+      <div class="pair-header">
+        <span class="pair-num">写真</span>
+      </div>
+      <div class="photos-row">
+        <div class="photo-slot" onclick="openPhotoSheet('before')">${mkSlot(showBefore,isLocalB,'before')}</div>
+        <div class="photo-slot" onclick="openPhotoSheet('after')">${mkSlot(showAfter,isLocalA,'after')}</div>
+      </div>
+      <div class="comment-wrap" style="border-bottom:0.5px solid #f0f0f0">
+        <input type="text" placeholder="指摘時コメント（アプリ内のみ）" value="${(r.beforeComment||'').replace(/"/g,'&quot;')}"
+          oninput="currentRec.beforeComment=this.value;saveLocal()">
+      </div>
+      <div class="comment-wrap">
+        <input type="text" placeholder="是正後コメント（アプリ内のみ）" value="${(r.afterComment||'').replace(/"/g,'&quot;')}"
+          oninput="currentRec.afterComment=this.value;saveLocal()">
+      </div>
+    </div>`;
+}
+
+document.getElementById('backBtn').onclick = () => { renderResults(); showScreen('searchScreen'); };
+
+// 写真シート
+function openPhotoSheet(side) {
+  activeSlot = side;
+  const hasPhoto = side==='before' ? (currentRec.localBefore || (currentRec.fields['指摘写真']&&currentRec.fields['指摘写真'][0])) : (currentRec.localAfter || (currentRec.fields['是正写真']&&currentRec.fields['是正写真'][0]));
+  document.getElementById('sheetTitle').textContent = side==='before' ? '指摘時の写真' : '是正後の写真';
+  document.getElementById('delPhotoBtn').style.display = (hasPhoto && (side==='before'?currentRec.localBefore:currentRec.localAfter)) ? 'flex' : 'none';
+  document.getElementById('photoOverlay').classList.add('open');
+}
+document.getElementById('photoCancelBtn').onclick = () => document.getElementById('photoOverlay').classList.remove('open');
+document.getElementById('photoOverlay').onclick = e => { if(e.target===document.getElementById('photoOverlay')) document.getElementById('photoOverlay').classList.remove('open'); };
+document.getElementById('camBtn').onclick = () => { document.getElementById('photoOverlay').classList.remove('open'); document.getElementById('fileCamera').click(); };
+document.getElementById('galBtn').onclick = () => { document.getElementById('photoOverlay').classList.remove('open'); document.getElementById('fileGallery').click(); };
+document.getElementById('delPhotoBtn').onclick = () => {
+  if (activeSlot==='before') currentRec.localBefore = null;
+  else currentRec.localAfter = null;
+  renderPair(); saveLocal();
+  document.getElementById('photoOverlay').classList.remove('open');
+};
+
+async function handleFile(file) {
+  if (!file||!activeSlot) return;
+  const compressed = await compressImage(file);
+  if (activeSlot==='before') currentRec.localBefore = compressed;
+  else currentRec.localAfter = compressed;
+  renderPair(); saveLocal();
+  document.getElementById('fileCamera').value = '';
+  document.getElementById('fileGallery').value = '';
+}
+document.getElementById('fileCamera').onchange = e => handleFile(e.target.files[0]);
+document.getElementById('fileGallery').onchange = e => handleFile(e.target.files[0]);
+
+// ===== Airtableに写真をアップロード =====
+document.getElementById('uploadBtn').onclick = async () => {
+  const r = currentRec;
+  if (!r.localBefore && !r.localAfter) { toast('新規撮影した写真がありません'); return; }
+  const s = loadSettings();
+  const btn = document.getElementById('uploadBtn');
+  btn.classList.add('loading'); btn.textContent = '⏳ アップロード中…';
+
+  const uploadPhoto = async (dataUrl, fieldName) => {
+    const base64   = dataUrl.split(',')[1];
+    const mimeType = dataUrl.match(/data:(.*?);/)[1];
+    const binary   = atob(base64);
+    const bytes    = new Uint8Array(binary.length);
+    for (let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], {type: mimeType});
+    const form = new FormData();
+    form.append('file', blob, `photo_${Date.now()}.jpg`);
+    form.append('filename', `photo_${Date.now()}.jpg`);
+    const res = await fetch(
+      `https://content.airtable.com/v0/${s.base}/${r.id}/${encodeURIComponent(fieldName)}/uploadAttachment`,
+      { method:'POST', headers:{ 'Authorization':`Bearer ${s.token}` }, body: form }
+    );
+    if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+    return res.json();
+  };
+
+  try {
+    let count = 0;
+    if (r.localBefore) { await uploadPhoto(r.localBefore, '指摘写真'); count++; }
+    if (r.localAfter)  { await uploadPhoto(r.localAfter,  '是正写真'); count++; }
+    toast(`${count}枚をAirtableに保存しました ✓`);
+  } catch(e) {
+    toast('アップロード失敗: ' + e.message);
+  } finally {
+    btn.classList.remove('loading'); btn.textContent = '🔗 Airtableに保存';
+  }
+};
+
+// ===== Google Sheetsに出力 =====
+document.getElementById('sheetsBtn').onclick = () => {
+  if (records.length === 0) { toast('先にAirtableから取得してください'); return; }
+
+  const today = todayJP();
+  let csv = '\uFEFF';
+  csv += `検査指摘 写真報告書,${today}\n\n`;
+  csv += '指摘内容,是正内容,検査名,検査日,進捗,業者,指摘写真(AT),是正写真(AT),指摘時コメント,是正後コメント,その他備考\n';
+
+  records.forEach(r => {
+    const f = r.fields;
+    const hasAtB = !!(f['指摘写真'] && f['指摘写真'].length > 0);
+    const hasAtA = !!(f['是正写真'] && f['是正写真'].length > 0);
+    const atBUrl = hasAtB ? f['指摘写真'][0].url : '';
+    const atAUrl = hasAtA ? f['是正写真'][0].url : '';
+    csv += [
+      `"${(f['指摘内容']||'').replace(/"/g,'""')}"`,
+      `"${(f['是正内容']||'').replace(/"/g,'""')}"`,
+      `"${(f['検査名']||'').replace(/"/g,'""')}"`,
+      `"${f['検査日']||''}"`,
+      `"${f['進捗']||''}"`,
+      `"${(f['業者']||'').replace(/"/g,'""')}"`,
+      `"${atBUrl}"`,
+      `"${atAUrl}"`,
+      `"${(r.beforeComment||'').replace(/"/g,'""')}"`,
+      `"${(r.afterComment||'').replace(/"/g,'""')}"`,
+      `"${(f['その他備考']||'').replace(/"/g,'""')}"`,
+    ].join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `検査指摘_${todayStr()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSVを保存しました（Google Sheetsで開けます）');
+};
+
+// ===== PDF出力 =====
+document.getElementById('pdfBtn').onclick = async () => {
+  const r = currentRec;
+  if (!r) return;
+  const f = r.fields;
+  const atBefore = f['指摘写真'] && f['指摘写真'][0] ? f['指摘写真'][0].url : null;
+  const atAfter  = f['是正写真'] && f['是正写真'][0] ? f['是正写真'][0].url : null;
+  const showBefore = r.localBefore || atBefore;
+  const showAfter  = r.localAfter  || atAfter;
+
+  if (!showBefore && !showAfter) { toast('写真を追加してください'); return; }
+
+  const btn = document.getElementById('pdfBtn');
+  btn.classList.add('loading'); btn.textContent = '⏳ PDF生成中…';
+  toast('PDF生成中…しばらくお待ちください', 8000);
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const title = `${f['検査名']||'検査'} 指摘是正写真`;
+    const today = todayJP();
+
+    const render = document.getElementById('pdfRender');
+    render.innerHTML = '';
+
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'pdf-page';
+    const metaLines = [
+      f['指摘内容'] ? `指摘内容：${f['指摘内容']}` : '',
+      f['是正内容'] ? `是正内容：${f['是正内容']}` : '',
+      f['検査日']   ? `検査日：${f['検査日']}` : '',
+      f['進捗']     ? `進捗：${f['進捗']}` : '',
+      f['業者']     ? `業者：${f['業者']}` : '',
+    ].filter(Boolean).join('　');
+
+    pageDiv.innerHTML = `
+      <div class="pdf-header">
+        <div>
+          <div class="pdf-title">${title}</div>
+          <div class="pdf-meta">${metaLines}</div>
+        </div>
+        <div class="pdf-info">${today}</div>
+      </div>
+      <div class="pdf-pair" style="flex:1">
+        <div class="pdf-pair-label">指摘是正記録</div>
+        <div class="pdf-photos">
+          <div class="pdf-photo-box">
+            <span class="pdf-badge pdf-badge-b">指摘時</span>
+            ${showBefore ? `<img class="pdf-photo-img" src="${showBefore}" crossorigin="anonymous">` : '<div class="pdf-photo-empty">（写真なし）</div>'}
+            <div class="pdf-comment">${r.beforeComment||''}</div>
+          </div>
+          <div class="pdf-photo-box">
+            <span class="pdf-badge pdf-badge-a">是正後</span>
+            ${showAfter ? `<img class="pdf-photo-img" src="${showAfter}" crossorigin="anonymous">` : '<div class="pdf-photo-empty">（写真なし）</div>'}
+            <div class="pdf-comment">${r.afterComment||''}</div>
+          </div>
+        </div>
+      </div>`;
+    render.appendChild(pageDiv);
+
+    const doc = new jsPDF({ unit:'px', format:'a4', orientation:'portrait' });
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+
+    const canvas = await html2canvas(pageDiv, { scale:2, useCORS:true, allowTaint:true, backgroundColor:'#ffffff', logging:false });
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pw, ph);
+    render.innerHTML = '';
+
+    const safeTitle = title.replace(/[\\/:*?"<>|　]/g,'_');
+    doc.save(`${safeTitle}_${todayStr()}.pdf`);
+    toast('PDFを保存しました ✓');
+  } catch(e) {
+    toast('PDF生成エラー: ' + e.message);
+  } finally {
+    btn.classList.remove('loading'); btn.textContent = '📄 PDF保存';
+  }
+};
+
+// ===== 起動 =====
+const s = loadSettings();
+if (!s.token) {
+  document.getElementById('settingTable').value = '各種検査指摘';
+  document.getElementById('settingBase').value  = 'app8zPFrrXIWNhYW5';
+  showScreen('settingsScreen');
+} else {
+  showScreen('searchScreen');
+  document.getElementById('resultList').innerHTML = `<div class="empty-state"><div class="emoji">🔍</div><p>条件を入力して<br>「Airtableから取得」してください</p></div>`;
+}
+</script>
+</body>
+</html>
