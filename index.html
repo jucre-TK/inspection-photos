@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="検査写真">
+<meta name="apple-mobile-web-app-title" content="検査写真報告書">
+<link rel="apple-touch-icon" href="icon_airtable.svg">
 <title>各種検査指摘 写真報告書</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -13,10 +14,9 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .top-header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:0.5px solid #e0e0e0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;min-height:48px}
 .top-header h1{font-size:15px;font-weight:600;color:#1a1a1a}
 .back-btn{font-size:14px;color:#378ADD;cursor:pointer;background:none;border:none;padding:4px 0}
-.screen{display:none}
-.screen.active{display:block}
+.screen{display:none}.screen.active{display:block}
 
-/* 設定画面 */
+/* 設定 */
 .settings-wrap{padding:16px;max-width:480px;margin:0 auto}
 .field-group{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;margin-bottom:12px;overflow:hidden}
 .field-group label{display:block;font-size:11px;font-weight:600;color:#888;padding:10px 14px 0;letter-spacing:0.05em}
@@ -26,7 +26,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .primary-btn:active{opacity:0.85}
 .note{font-size:11px;color:#aaa;text-align:center;padding:4px}
 
-/* 検索画面 */
+/* 検索 */
 #searchScreen main{padding:12px;max-width:480px;margin:0 auto}
 .search-card{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;padding:14px;margin-bottom:12px}
 .search-card h3{font-size:13px;font-weight:600;color:#555;margin-bottom:10px}
@@ -40,29 +40,57 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .search-btn{width:100%;padding:12px;border:none;border-radius:10px;background:#378ADD;color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .search-btn:active{opacity:0.85}
 .search-btn.loading{opacity:0.6;pointer-events:none}
+.new-kensa-btn{width:100%;padding:12px;border:1.5px dashed #1D9E75;border-radius:10px;background:#f0fdf8;color:#1D9E75;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.new-kensa-btn:active{background:#d4f0e4}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
 .spinner.blue{border-color:rgba(55,138,221,0.3);border-top-color:#378ADD}
+.spinner.green{border-color:rgba(29,158,117,0.3);border-top-color:#1D9E75}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* 報告書画面 */
+/* 報告書 */
 #reportScreen main{padding:12px;max-width:480px;margin:0 auto}
 .save-ind{font-size:10px;color:#1D9E75;white-space:nowrap}
+.output-bar{position:sticky;top:48px;background:#fff;border-bottom:0.5px solid #e0e0e0;padding:8px 12px;display:flex;gap:6px;z-index:40}
+.out-btn{flex:1;padding:11px 4px;border:0.5px solid #d8d8d8;border-radius:10px;background:#fff;color:#333;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
+.out-btn.pdf{color:#378ADD;border-color:#b8d8f8}
+.out-btn.upload{color:#854F0B;border-color:#f0d0a0;background:#fffaf0}
+.out-btn.sheets{color:#1D9E75;border-color:#b0e0cc}
+.out-btn.new-shiteki{color:#7C3AED;border-color:#c4b5fd;background:#faf5ff}
+.out-btn:active{transform:scale(0.97)}
+.out-btn.loading{opacity:0.6;pointer-events:none}
+
+.sel-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0}
+.sel-count{font-size:11px;color:#888}
+.sel-btns{display:flex;gap:6px}
+.sel-btn{font-size:11px;padding:4px 10px;border:0.5px solid #ccc;border-radius:6px;background:#fff;color:#888;cursor:pointer}
+.sel-btn.blue{border-color:#378ADD;color:#378ADD}
 
 /* 指摘カード */
-.rec-card{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;margin-bottom:12px;overflow:hidden}
-.rec-card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f8f8f8;border-bottom:0.5px solid #e8e8e8}
+.rec-card{background:#fff;border-radius:12px;border:0.5px solid #e0e0e0;margin-bottom:10px;overflow:hidden}
+.rec-card-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fafafa;border-bottom:0.5px solid #e8e8e8}
 .rec-checkbox{width:22px;height:22px;border-radius:6px;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-size:13px;color:#fff;transition:all 0.15s}
 .rec-checkbox.checked{background:#378ADD;border-color:#378ADD}
-.rec-card-title{font-size:13px;font-weight:600;color:#1a1a1a;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-num{font-size:12px;font-weight:700;color:#555;flex-shrink:0}
+.rec-comment-input{flex:1;font-size:12px;border:none;outline:none;background:transparent;color:#333;min-width:0}
 .rec-badge{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;flex-shrink:0}
 
-/* 是正前後タイトル行 */
+/* 指摘情報編集エリア */
+.rec-meta{padding:10px 12px;border-bottom:0.5px solid #f0f0f0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.meta-field{display:flex;flex-direction:column;gap:2px}
+.meta-field.full{grid-column:1/-1}
+.meta-field label{font-size:9px;font-weight:600;color:#aaa;letter-spacing:0.05em}
+.meta-field input,.meta-field select,.meta-field textarea{font-size:12px;border:0.5px solid #e8e8e8;border-radius:6px;padding:5px 8px;outline:none;color:#1a1a1a;background:#fafafa;font-family:inherit}
+.meta-field input:focus,.meta-field select:focus,.meta-field textarea:focus{border-color:#378ADD;background:#fff}
+.meta-field textarea{resize:none;line-height:1.4}
+.at-sync-badge{font-size:9px;background:#faeeda;color:#854F0B;padding:1px 4px;border-radius:3px;font-weight:600;margin-left:4px}
+
+/* 写真エリア */
 .photo-title-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid #e8e8e8}
 .photo-title-cell{text-align:center;font-size:11px;font-weight:700;padding:5px;color:#555;background:#f0f0f0}
 .photo-title-cell:first-child{border-right:0.5px solid #e8e8e8}
-
-/* 写真ペア行 */
 .pair-row{border-bottom:0.5px solid #f0f0f0}
+.pair-row-header{display:flex;justify-content:flex-end;padding:2px 8px;background:#fafafa;border-bottom:0.5px solid #f0f0f0}
+.del-row-btn{font-size:10px;color:#cc4444;background:none;border:none;cursor:pointer;padding:2px 4px}
 .photos-grid{display:grid;grid-template-columns:1fr 1fr}
 .photo-slot{position:relative;aspect-ratio:4/3;cursor:pointer;overflow:hidden;background:#f8f8f8;display:flex;align-items:center;justify-content:center}
 .photo-slot:first-child{border-right:0.5px solid #e8e8e8}
@@ -71,30 +99,15 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .photo-empty .icon{font-size:20px;color:#ddd}
 .photo-empty span{font-size:9px;color:#ccc}
 .photo-check{position:absolute;top:4px;right:4px;width:16px;height:16px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
-.at-badge-photo{position:absolute;top:4px;left:4px;font-size:7px;background:#faeeda;color:#854F0B;padding:1px 3px;border-radius:2px;font-weight:700}
-
-/* コメント行 */
+.at-photo-badge{position:absolute;top:4px;left:4px;font-size:7px;background:#faeeda;color:#854F0B;padding:1px 3px;border-radius:2px;font-weight:700}
 .comment-grid{display:grid;grid-template-columns:1fr 1fr;border-top:0.5px solid #f0f0f0}
 .comment-cell{padding:5px 8px}
 .comment-cell:first-child{border-right:0.5px solid #f0f0f0}
 .comment-cell textarea{width:100%;font-size:11px;border:none;outline:none;color:#333;background:transparent;resize:none;font-family:inherit;line-height:1.4}
-
-/* 写真行追加ボタン */
 .add-pair-btn{width:100%;padding:7px;border:none;background:#f5f5f5;color:#378ADD;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;border-top:0.5px solid #e8e8e8}
 .add-pair-btn:active{background:#e8f3ff}
 
-/* 出力ボタン */
-.output-bar{position:sticky;top:48px;background:#fff;border-bottom:0.5px solid #e0e0e0;padding:8px 12px;display:flex;gap:8px;z-index:40}
-.out-btn{flex:1;padding:12px 6px;border:0.5px solid #d8d8d8;border-radius:10px;background:#fff;color:#333;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
-.out-btn.pdf{color:#378ADD;border-color:#b8d8f8}
-.out-btn.upload{color:#854F0B;border-color:#f0d0a0;background:#fffaf0}
-.out-btn.sheets{color:#1D9E75;border-color:#b0e0cc}
-.out-btn:active{transform:scale(0.97)}
-.out-btn.loading{opacity:0.6;pointer-events:none}
-
-.selected-count{font-size:11px;color:#378ADD;text-align:center;padding:6px 12px 0}
-
-/* モーダル */
+/* オーバーレイ */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .overlay.open{opacity:1;pointer-events:auto}
 .sheet{background:#fff;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));width:100%;max-width:480px;transform:translateY(20px);transition:transform 0.2s}
@@ -107,25 +120,38 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .sheet-btn.cancel{background:#f0f0f0;color:#888}
 .sheet-btn:active{opacity:0.75}
 
+/* 新規作成フォーム */
+.form-sheet{background:#fff;border-radius:18px 18px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;transform:translateY(20px);transition:transform 0.2s;max-height:85vh;overflow-y:auto}
+.overlay.open .form-sheet{transform:translateY(0)}
+.form-sheet h3{font-size:15px;font-weight:600;margin-bottom:16px;color:#1a1a1a}
+.form-field{margin-bottom:12px}
+.form-field label{display:block;font-size:11px;font-weight:600;color:#aaa;margin-bottom:5px;letter-spacing:0.05em}
+.form-field input,.form-field select{width:100%;font-size:14px;padding:10px 12px;border:0.5px solid #e0e0e0;border-radius:10px;outline:none;color:#1a1a1a;background:#fafafa;font-family:inherit}
+.form-field input:focus,.form-field select:focus{border-color:#378ADD;background:#fff}
+.form-field .required{color:#e05;margin-left:2px}
+.create-btn{width:100%;padding:14px;border:none;border-radius:12px;background:#1D9E75;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px}
+.create-btn:active{opacity:0.85}
+.create-btn.loading{opacity:0.6;pointer-events:none}
+.cancel-btn{width:100%;padding:12px;border:none;border-radius:12px;background:#f0f0f0;color:#888;font-size:14px;cursor:pointer}
+
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
-input[type=file]{display:none}
-
 .empty-state{text-align:center;padding:48px 24px;color:#bbb}
 .empty-state .emoji{font-size:40px;margin-bottom:12px}
 .empty-state p{font-size:14px;line-height:1.6}
+input[type=file]{display:none}
 
-/* PDF描画用 */
+/* PDF */
 #pdfRender{position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;z-index:-1}
 .pdf-page{width:794px;padding:40px 48px 32px;background:#fff;display:inline-block}
 .pdf-main-title{text-align:center;font-size:14px;font-weight:700;letter-spacing:0.1em;margin-bottom:2px}
 .pdf-sub-title{text-align:center;font-size:11px;color:#555;margin-bottom:10px}
 .pdf-rec{margin-bottom:14px;border:0.5px solid #bbb}
-.pdf-rec-header{display:flex;align-items:center;gap:8px;background:#f0f0f0;padding:4px 8px;font-size:10px;font-weight:700;color:#333;border-bottom:0.5px solid #bbb}
+.pdf-rec-header{display:flex;align-items:center;gap:8px;background:#f0f0f0;padding:4px 8px;font-size:11px;font-weight:700;color:#111;border-bottom:0.5px solid #bbb}
 .pdf-rec-header-num{font-weight:700;flex-shrink:0}
-.pdf-rec-header-comment{font-weight:400;font-size:9px;color:#555;flex:1}
+.pdf-rec-header-comment{font-weight:400;font-size:10px;color:#333;flex:1}
 .pdf-photo-title-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid #bbb}
-.pdf-photo-title-cell{text-align:center;font-size:9px;font-weight:700;padding:3px;background:#f8f8f8;color:#555}
+.pdf-photo-title-cell{text-align:center;font-size:10px;font-weight:700;padding:3px;background:#f8f8f8;color:#111}
 .pdf-photo-title-cell:first-child{border-right:0.5px solid #bbb}
 .pdf-pair{border-bottom:0.5px solid #ddd}
 .pdf-pair:last-child{border-bottom:none}
@@ -133,11 +159,14 @@ input[type=file]{display:none}
 .pdf-photo-cell{position:relative}
 .pdf-photo-cell:first-child{border-right:0.5px solid #ddd}
 .pdf-photo-cell img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
-.pdf-photo-empty{width:100%;aspect-ratio:4/3;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:9px;color:#bbb}
+.pdf-photo-empty{width:100%;aspect-ratio:4/3;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888}
+.pdf-date-row{display:grid;grid-template-columns:1fr 1fr;border-top:0.5px solid #eee;background:#f8f8f8}
+.pdf-date-cell{padding:3px 6px;font-size:9px;font-weight:600;color:#333;min-height:18px}
+.pdf-date-cell:first-child{border-right:0.5px solid #eee}
 .pdf-comment-row{display:grid;grid-template-columns:1fr 1fr;border-top:0.5px solid #eee}
-.pdf-comment-cell{padding:3px 6px;font-size:8px;color:#444;line-height:1.5;min-height:20px}
+.pdf-comment-cell{padding:4px 6px;font-size:9px;color:#111;line-height:1.5;min-height:22px}
 .pdf-comment-cell:first-child{border-right:0.5px solid #eee}
-.pdf-page-num{text-align:right;font-size:8px;color:#aaa;margin-top:4px}
+.pdf-page-num{text-align:right;font-size:9px;color:#666;margin-top:4px}
 </style>
 </head>
 <body>
@@ -162,6 +191,12 @@ input[type=file]{display:none}
     <button class="back-btn" id="settingsBtn" style="color:#aaa;font-size:12px">⚙️</button>
   </div>
   <main>
+    <!-- 新規検査作成ボタン -->
+    <button class="new-kensa-btn" id="newKensaBtn">
+      <span class="spinner green" id="newKensaSpinner" style="display:none"></span>
+      ＋ 新しい検査を作成
+    </button>
+
     <div class="search-card">
       <h3>🔍 絞り込み条件</h3>
       <div class="filter-row">
@@ -201,7 +236,7 @@ input[type=file]{display:none}
   </main>
 </div>
 
-<!-- 報告書編集画面 -->
+<!-- 報告書画面 -->
 <div id="reportScreen" class="screen">
   <div class="top-header">
     <button class="back-btn" id="backBtn">← 検索</button>
@@ -211,17 +246,90 @@ input[type=file]{display:none}
     <button class="out-btn pdf" id="pdfBtn">📄 PDF</button>
     <button class="out-btn upload" id="uploadBtn">🔗 Airtable</button>
     <button class="out-btn sheets" id="sheetsBtn">📊 CSV</button>
+    <button class="out-btn new-shiteki" id="newShitekiBtn">＋ 指摘追加</button>
   </div>
   <main>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0">
-      <span id="selectedCount" style="font-size:11px;color:#888"></span>
-      <div style="display:flex;gap:6px">
-        <button id="selectAllBtn" style="font-size:11px;padding:4px 10px;border:0.5px solid #378ADD;border-radius:6px;background:#fff;color:#378ADD;cursor:pointer">全選択</button>
-        <button id="deselectAllBtn" style="font-size:11px;padding:4px 10px;border:0.5px solid #ccc;border-radius:6px;background:#fff;color:#888;cursor:pointer">全解除</button>
+    <div class="sel-bar">
+      <span id="selCount" class="sel-count"></span>
+      <div class="sel-btns">
+        <button id="selAllBtn" class="sel-btn blue">全選択</button>
+        <button id="deselAllBtn" class="sel-btn">全解除</button>
       </div>
     </div>
     <div id="recCards" style="padding:12px"></div>
   </main>
+</div>
+
+<!-- 新規検査作成シート -->
+<div class="overlay" id="newKensaOverlay">
+  <div class="form-sheet">
+    <h3>＋ 新しい検査を作成</h3>
+    <div class="form-field">
+      <label>検査名<span class="required">*</span></label>
+      <input type="text" id="nk_name" placeholder="例：S棟1階配筋検査">
+    </div>
+    <div class="form-field">
+      <label>検査日</label>
+      <input type="date" id="nk_date">
+    </div>
+    <div class="form-field">
+      <label>検査種別</label>
+      <input type="text" id="nk_type" placeholder="例：設計監理">
+    </div>
+    <div class="form-field">
+      <label>検査員</label>
+      <input type="text" id="nk_inspector" placeholder="例：山田">
+    </div>
+    <div class="form-field">
+      <label>立会者</label>
+      <input type="text" id="nk_witness" placeholder="例：鍜治田">
+    </div>
+    <button class="create-btn" id="createKensaBtn">検査を作成してAirtableに登録</button>
+    <button class="cancel-btn" id="cancelKensaBtn">キャンセル</button>
+  </div>
+</div>
+
+<!-- 新規指摘追加シート -->
+<div class="overlay" id="newShitekiOverlay">
+  <div class="form-sheet">
+    <h3>＋ 指摘を追加</h3>
+    <div class="form-field">
+      <label>指摘内容<span class="required">*</span></label>
+      <input type="text" id="ns_content" placeholder="例：被り厚不足">
+    </div>
+    <div class="form-field">
+      <label>部位</label>
+      <input type="text" id="ns_bui" placeholder="例：1階柱">
+    </div>
+    <div class="form-field">
+      <label>指摘場所</label>
+      <input type="text" id="ns_basho" placeholder="例：通り芯A-3">
+    </div>
+    <div class="form-field">
+      <label>指摘者</label>
+      <input type="text" id="ns_shashin" placeholder="例：山田">
+    </div>
+    <div class="form-field">
+      <label>検査日</label>
+      <input type="date" id="ns_kensaDate">
+    </div>
+    <div class="form-field">
+      <label>業者</label>
+      <input type="text" id="ns_gyosha" placeholder="例：○○工務店">
+    </div>
+    <div class="form-field">
+      <label>進捗</label>
+      <select id="ns_progress">
+        <option value="">未設定</option>
+        <option>是正中</option><option>業振済</option><option>完了</option>
+        <option>確認済</option><option>仕様</option><option>施工前</option>
+        <option>保修中</option><option>要注意</option><option>業者変更</option>
+        <option>再補修</option><option>追加</option>
+      </select>
+    </div>
+    <button class="create-btn" id="createShitekiBtn">指摘を追加してAirtableに登録</button>
+    <button class="cancel-btn" id="cancelShitekiBtn">キャンセル</button>
+  </div>
 </div>
 
 <!-- 写真シート -->
@@ -243,18 +351,17 @@ input[type=file]{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-const SETTINGS_KEY  = 'genba_v4_settings';
-const LOCAL_KEY     = 'genba_v4_local';
-const BASE_ID       = 'app8zPFrrXIWNhYW5';
-const TBL_NISSHIN   = 'tblfk1A5vtpJpR3Jy';
-const TBL_SHITEKI   = 'tbl231zvyOlWS6iCs';
+const SETTINGS_KEY = 'genba_v5_settings';
+const LOCAL_KEY    = 'genba_v5_local';
+const BASE_ID      = 'app8zPFrrXIWNhYW5';
+const TBL_NISSHIN  = 'tblfk1A5vtpJpR3Jy';
+const TBL_SHITEKI  = 'tbl231zvyOlWS6iCs';
 
-let items = [];      // 取得した指摘（表示・編集用）
+let items = [];
+let selectedKensaName = '検査指摘写真報告書';
 let activeSlot = null;
 let saveTimer = null;
-let selectedKensaName = '検査指摘写真報告書'; // 検索時に選択した検査名
 
-// ===== ユーティリティ =====
 function toast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
 function todayStr(){const d=new Date();return`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`}
 function todayJP(){return new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'})}
@@ -262,19 +369,14 @@ function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classL
 function loadSettings(){try{return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{}}catch(e){return{}}}
 function saveSettings(s){localStorage.setItem(SETTINGS_KEY,JSON.stringify(s))}
 function loadLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}')}catch(e){return{}}}
+function progressColor(p){const m={'是正中':'#dbeeff','業振済':'#faeeda','完了':'#d4f0e4','確認済':'#d4f0e4','仕様':'#f0f0ec','施工前':'#f0f0ec','保修中':'#faeeda','要注意':'#faeeda','業者変更':'#faeeda','再補修':'#dbeeff','追加':'#dbeeff'};return m[p]||'#f0f0ec'}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
-function progressColor(p){
-  const m={'是正中':'#dbeeff','業振済':'#faeeda','完了':'#d4f0e4','確認済':'#d4f0e4','仕様':'#f0f0ec','施工前':'#f0f0ec','保修中':'#faeeda','要注意':'#faeeda','業者変更':'#faeeda','再補修':'#dbeeff','追加':'#dbeeff'};
-  return m[p]||'#f0f0ec';
-}
-
-// ===== 設定 =====
+// 設定
 document.getElementById('saveSettingsBtn').onclick=()=>{
   const token=document.getElementById('settingToken').value.trim();
   if(!token){toast('Tokenを入力してください');return}
-  saveSettings({token});
-  loadKensaNames();
-  showScreen('searchScreen');
+  saveSettings({token});loadKensaNames();showScreen('searchScreen');
 };
 document.getElementById('settingsBtn').onclick=()=>{
   const s=loadSettings();
@@ -282,10 +384,30 @@ document.getElementById('settingsBtn').onclick=()=>{
   showScreen('settingsScreen');
 };
 
-// ===== Airtable API =====
+// Airtable API
 async function atGet(tableId,params=''){
   const s=loadSettings();
   const res=await fetch(`https://api.airtable.com/v0/${BASE_ID}/${tableId}${params}`,{headers:{'Authorization':`Bearer ${s.token}`}});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`)}
+  return res.json();
+}
+async function atPost(tableId,fields){
+  const s=loadSettings();
+  const res=await fetch(`https://api.airtable.com/v0/${BASE_ID}/${tableId}`,{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${s.token}`,'Content-Type':'application/json'},
+    body:JSON.stringify({fields})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`)}
+  return res.json();
+}
+async function atPatch(tableId,recordId,fields){
+  const s=loadSettings();
+  const res=await fetch(`https://api.airtable.com/v0/${BASE_ID}/${tableId}/${recordId}`,{
+    method:'PATCH',
+    headers:{'Authorization':`Bearer ${s.token}`,'Content-Type':'application/json'},
+    body:JSON.stringify({fields})
+  });
   if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`)}
   return res.json();
 }
@@ -321,80 +443,166 @@ function compressImage(file){
   });
 }
 
+// ===== 新規検査作成 =====
+document.getElementById('newKensaBtn').onclick=()=>{
+  document.getElementById('nk_name').value='';
+  document.getElementById('nk_date').value='';
+  document.getElementById('nk_type').value='';
+  document.getElementById('nk_inspector').value='';
+  document.getElementById('nk_witness').value='';
+  document.getElementById('newKensaOverlay').classList.add('open');
+};
+document.getElementById('cancelKensaBtn').onclick=()=>document.getElementById('newKensaOverlay').classList.remove('open');
+document.getElementById('newKensaOverlay').onclick=e=>{if(e.target===document.getElementById('newKensaOverlay'))document.getElementById('newKensaOverlay').classList.remove('open')};
+
+document.getElementById('createKensaBtn').onclick=async()=>{
+  const name=document.getElementById('nk_name').value.trim();
+  if(!name){toast('検査名を入力してください');return}
+  const btn=document.getElementById('createKensaBtn');
+  btn.classList.add('loading');btn.textContent='登録中…';
+  try{
+    const fields={'検査名':name};
+    if(document.getElementById('nk_date').value) fields['検査日']=document.getElementById('nk_date').value;
+    if(document.getElementById('nk_type').value) fields['検査種別']=document.getElementById('nk_type').value;
+    if(document.getElementById('nk_inspector').value) fields['検査員']=document.getElementById('nk_inspector').value;
+    if(document.getElementById('nk_witness').value) fields['立会者']=document.getElementById('nk_witness').value;
+    await atPost(TBL_NISSHIN,fields);
+    document.getElementById('newKensaOverlay').classList.remove('open');
+    await loadKensaNames();
+    // 作成した検査名をドロップダウンに自動選択
+    const sel=document.getElementById('filterKensaName');
+    for(let i=0;i<sel.options.length;i++){if(sel.options[i].value===name){sel.selectedIndex=i;break}}
+    toast(`「${name}」を登録しました ✓`);
+  }catch(e){toast('登録失敗: '+e.message)}
+  finally{btn.classList.remove('loading');btn.textContent='検査を作成してAirtableに登録'}
+};
+
 // ===== 検索・取得 =====
 document.getElementById('searchBtn').onclick=async()=>{
   const s=loadSettings();
   if(!s.token){toast('設定が必要です');showScreen('settingsScreen');return}
-
   const kensaName=document.getElementById('filterKensaName').value;
-  selectedKensaName = kensaName || '検査指摘写真報告書';
   const dateFrom=document.getElementById('filterDateFrom').value;
   const dateTo=document.getElementById('filterDateTo').value;
   const progress=document.getElementById('filterProgress').value;
   const gyosha=document.getElementById('filterGyosha').value.trim();
-
+  selectedKensaName=kensaName||'検査指摘写真報告書';
   const conds=[];
   if(kensaName) conds.push(`{検査名}="${kensaName}"`);
   if(progress)  conds.push(`{進捗}="${progress}"`);
   if(gyosha)    conds.push(`SEARCH("${gyosha}",ARRAYJOIN(ARRAYCOMPACT({業者})))`);
   if(dateFrom)  conds.push(`{検査日}>="${dateFrom}"`);
   if(dateTo)    conds.push(`{検査日}<="${dateTo}"`);
-
   const formula=conds.length>1?`AND(${conds.join(',')})`:conds[0]||'';
   let url=`?pageSize=100&sort[0][field]=指摘ID&sort[0][direction]=asc`;
   if(formula) url+=`&filterByFormula=${encodeURIComponent(formula)}`;
-
   const btn=document.getElementById('searchBtn');
   const sp=document.getElementById('searchSpinner');
   btn.classList.add('loading');sp.style.display='inline-block';btn.lastChild.textContent=' 取得中…';
-
   try{
     const data=await atGet(TBL_SHITEKI,url);
     const local=loadLocal();
-
     items=(data.records||[]).map(r=>{
       const f=r.fields;
       const atB=(f['指摘写真']||[]).map(a=>({url:a.url,isUrl:true}));
       const atA=(f['是正写真']||[]).map(a=>({url:a.url,isUrl:true}));
       const savedPairs=local[r.id]?.pairs;
       let pairs;
-      if(savedPairs){
-        pairs=savedPairs;
-      }else{
+      if(savedPairs){pairs=savedPairs}
+      else{
         const maxLen=Math.max(1,atB.length,atA.length);
         pairs=[];
         for(let i=0;i<maxLen;i++){
           pairs.push({
-            before:atB[i]?.url||null, beforeIsUrl:!!atB[i],
-            after:atA[i]?.url||null,  afterIsUrl:!!atA[i],
+            before:atB[i]?.url||null,beforeIsUrl:!!atB[i],
+            after:atA[i]?.url||null,afterIsUrl:!!atA[i],
             beforeComment:`指摘内容：${f['指摘内容']||''}`,
             afterComment:`是正内容：${f['是正内容']||''}`,
           });
         }
       }
       return{
-        recId:r.id,
-        selected: local[r.id]?.selected!==undefined ? local[r.id].selected : true,
-        kensaName: Array.isArray(f['検査名']) ? f['検査名'][0] : (f['検査名']||''),
+        recId:r.id,isNew:false,
+        selected:local[r.id]?.selected!==undefined?local[r.id].selected:true,
+        kensaName:Array.isArray(f['検査名'])?f['検査名'][0]:(f['検査名']||''),
         progress:f['進捗']||'',
         shitekiContent:f['指摘内容']||'',
         zeseiContent:f['是正内容']||'',
-        gyosha:f['業者']||'',
+        gyosha:Array.isArray(f['業者'])?f['業者'][0]:(f['業者']||''),
         kensaDate:f['検査日']||'',
+        kanryoDate:f['完了日']||'',
         headerComment:local[r.id]?.headerComment||'',
         pairs,
+        _dirty:false,
       };
     });
-
-    if(items.length===0){toast('条件に合うレコードが見つかりません');return}
+    if(items.length===0){
+      toast('指摘がありません。「＋ 指摘追加」から追加できます');
+      renderReportScreen();
+      showScreen('reportScreen');
+      return;
+    }
     toast(`${items.length}件取得しました`);
     renderReportScreen();
     showScreen('reportScreen');
-  }catch(e){
-    toast('取得エラー: '+e.message);
-  }finally{
-    btn.classList.remove('loading');sp.style.display='none';btn.lastChild.textContent='Airtableから取得';
-  }
+  }catch(e){toast('取得エラー: '+e.message)}
+  finally{btn.classList.remove('loading');sp.style.display='none';btn.lastChild.textContent='Airtableから取得'}
+};
+
+// ===== 新規指摘追加 =====
+document.getElementById('newShitekiBtn').onclick=()=>{
+  ['ns_content','ns_bui','ns_basho','ns_shashin','ns_gyosha'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ns_kensaDate').value='';
+  document.getElementById('ns_progress').value='';
+  document.getElementById('newShitekiOverlay').classList.add('open');
+};
+document.getElementById('cancelShitekiBtn').onclick=()=>document.getElementById('newShitekiOverlay').classList.remove('open');
+document.getElementById('newShitekiOverlay').onclick=e=>{if(e.target===document.getElementById('newShitekiOverlay'))document.getElementById('newShitekiOverlay').classList.remove('open')};
+
+document.getElementById('createShitekiBtn').onclick=async()=>{
+  const content=document.getElementById('ns_content').value.trim();
+  if(!content){toast('指摘内容を入力してください');return}
+  const btn=document.getElementById('createShitekiBtn');
+  btn.classList.add('loading');btn.textContent='登録中…';
+  try{
+    const fields={'指摘内容':content};
+
+    // 検査名はリンクフィールドなのでレコードIDで渡す
+    if(selectedKensaName&&selectedKensaName!=='検査指摘写真報告書'){
+      try{
+        const kensaData=await atGet(TBL_NISSHIN,`?filterByFormula=${encodeURIComponent(`{検査名}="${selectedKensaName}"`)}&maxRecords=1`);
+        if(kensaData.records&&kensaData.records.length>0){
+          fields['検査名']=[kensaData.records[0].id];
+        }
+      }catch(e){/* 検査名リンクは任意なのでエラーでも続行 */}
+    }
+
+    if(document.getElementById('ns_bui').value) fields['部位']=document.getElementById('ns_bui').value;
+    if(document.getElementById('ns_basho').value) fields['指摘場所']=document.getElementById('ns_basho').value;
+    if(document.getElementById('ns_shashin').value) fields['指摘者']=document.getElementById('ns_shashin').value;
+    if(document.getElementById('ns_kensaDate').value) fields['検査日']=document.getElementById('ns_kensaDate').value;
+    if(document.getElementById('ns_gyosha').value) fields['業者']=document.getElementById('ns_gyosha').value;
+    if(document.getElementById('ns_progress').value) fields['進捗']=document.getElementById('ns_progress').value;
+
+    const rec=await atPost(TBL_SHITEKI,fields);
+    items.push({
+      recId:rec.id,isNew:true,selected:true,
+      kensaName:selectedKensaName,
+      progress:fields['進捗']||'',
+      shitekiContent:content,
+      zeseiContent:'',
+      gyosha:fields['業者']||'',
+      kensaDate:fields['検査日']||'',
+      kanryoDate:'',
+      headerComment:'',
+      pairs:[{before:null,beforeIsUrl:false,after:null,afterIsUrl:false,beforeComment:`指摘内容：${content}`,afterComment:'是正内容：'}],
+      _dirty:false,
+    });
+    document.getElementById('newShitekiOverlay').classList.remove('open');
+    renderReportScreen();
+    toast('指摘を追加しました ✓');
+  }catch(e){toast('登録失敗: '+e.message)}
+  finally{btn.classList.remove('loading');btn.textContent='指摘を追加してAirtableに登録'}
 };
 
 // ===== ローカル保存 =====
@@ -404,49 +612,89 @@ function saveLocal(){
   saveTimer=setTimeout(()=>{
     try{
       const local=loadLocal();
-      items.forEach(item=>{
-        local[item.recId]={selected:item.selected,pairs:item.pairs,headerComment:item.headerComment||''};
-      });
+      items.forEach(item=>{local[item.recId]={selected:item.selected,pairs:item.pairs,headerComment:item.headerComment||''}});
       localStorage.setItem(LOCAL_KEY,JSON.stringify(local));
       document.getElementById('saveInd').textContent='💾 保存済';
     }catch(e){toast('保存失敗：容量不足の可能性')}
   },800);
 }
 
-// ===== 報告書画面描画 =====
+// ===== 報告書画面 =====
+function updateSelCount(){
+  const n=items.filter(i=>i.selected).length;
+  if(items.length===0){
+    document.getElementById('selCount').textContent='「＋ 指摘追加」から指摘を追加してください';
+  }else{
+    document.getElementById('selCount').textContent=`${items.length}件取得　${n}件選択中`;
+  }
+}
+document.getElementById('backBtn').onclick=()=>showScreen('searchScreen');
+document.getElementById('selAllBtn').onclick=()=>{items.forEach(i=>i.selected=true);renderReportScreen();saveLocal()};
+document.getElementById('deselAllBtn').onclick=()=>{items.forEach(i=>i.selected=false);renderReportScreen();saveLocal()};
+
 function renderReportScreen(){
   const container=document.getElementById('recCards');
   container.innerHTML='';
-  updateSelectedCount();
-
+  updateSelCount();
+  if(items.length===0){
+    container.innerHTML=`<div class="empty-state"><div class="emoji">📋</div><p>指摘がありません<br>上部の「＋ 指摘追加」から<br>追加してください</p></div>`;
+    return;
+  }
   items.forEach((item,itemIdx)=>{
     const card=document.createElement('div');
     card.className='rec-card';
-
-    // ヘッダー（チェック＋No.番号＋フリーコメント）
+    // ヘッダー
     const hdr=document.createElement('div');
     hdr.className='rec-card-header';
     const chk=document.createElement('div');
     chk.className='rec-checkbox'+(item.selected?' checked':'');
     chk.textContent=item.selected?'✓':'';
-    chk.onclick=()=>{item.selected=!item.selected;chk.className='rec-checkbox'+(item.selected?' checked':'');chk.textContent=item.selected?'✓':'';updateSelectedCount();saveLocal()};
-    const numEl=document.createElement('span');
-    numEl.style.cssText='font-size:12px;font-weight:700;flex-shrink:0';
-    numEl.textContent=`No.${itemIdx+1}`;
+    chk.onclick=()=>{item.selected=!item.selected;chk.className='rec-checkbox'+(item.selected?' checked':'');chk.textContent=item.selected?'✓':'';updateSelCount();saveLocal()};
+    const numEl=document.createElement('span');numEl.className='rec-num';numEl.textContent=`No.${itemIdx+1}`;
+    if(item.isNew){const nb=document.createElement('span');nb.style.cssText='font-size:9px;background:#d4f0e4;color:#0F6E56;padding:1px 5px;border-radius:3px;font-weight:600';nb.textContent='NEW';hdr.appendChild(nb)}
     const cmtInput=document.createElement('input');
-    cmtInput.type='text';
-    cmtInput.placeholder='コメント（任意）';
-    cmtInput.value=item.headerComment||'';
-    cmtInput.style.cssText='flex:1;font-size:12px;border:none;outline:none;background:transparent;color:#333;min-width:0';
+    cmtInput.type='text';cmtInput.className='rec-comment-input';
+    cmtInput.placeholder='コメント（任意）';cmtInput.value=item.headerComment||'';
     cmtInput.oninput=()=>{item.headerComment=cmtInput.value;saveLocal()};
     const bdg=document.createElement('span');
-    bdg.className='rec-badge';
-    bdg.style.background=progressColor(item.progress);
-    bdg.textContent=item.progress;
+    bdg.className='rec-badge';bdg.style.background=progressColor(item.progress);bdg.textContent=item.progress;
     hdr.appendChild(chk);hdr.appendChild(numEl);hdr.appendChild(cmtInput);if(item.progress)hdr.appendChild(bdg);
     card.appendChild(hdr);
 
-    // 是正前・是正後タイトル行
+    // 指摘情報編集エリア
+    const meta=document.createElement('div');
+    meta.className='rec-meta';
+    const metaFields=[
+      {label:'指摘内容',key:'shitekiContent',type:'textarea',full:true,sync:true},
+      {label:'是正内容',key:'zeseiContent',type:'textarea',full:true,sync:true},
+      {label:'検査日',key:'kensaDate',type:'date',sync:true},
+      {label:'完了日',key:'kanryoDate',type:'date',sync:true},
+      {label:'進捗',key:'progress',type:'select',sync:true},
+      {label:'業者',key:'gyosha',type:'text',sync:true},
+    ];
+    metaFields.forEach(mf=>{
+      const wrap=document.createElement('div');
+      wrap.className='meta-field'+(mf.full?' full':'');
+      const lbl=document.createElement('label');
+      lbl.innerHTML=mf.label+(mf.sync?`<span class="at-sync-badge">Airtable連携</span>`:'');
+      wrap.appendChild(lbl);
+      let el;
+      if(mf.type==='textarea'){
+        el=document.createElement('textarea');el.rows=2;el.value=item[mf.key]||'';
+      }else if(mf.type==='select'){
+        el=document.createElement('select');
+        ['','是正中','業振済','完了','確認済','仕様','施工前','保修中','要注意','業者変更','再補修','追加'].forEach(v=>{
+          const o=document.createElement('option');o.value=v;o.textContent=v||'未設定';if(item[mf.key]===v)o.selected=true;el.appendChild(o);
+        });
+      }else{
+        el=document.createElement('input');el.type=mf.type;el.value=item[mf.key]||'';
+      }
+      el.oninput=el.onchange=()=>{item[mf.key]=el.value;item._dirty=true;saveLocal()};
+      wrap.appendChild(el);meta.appendChild(wrap);
+    });
+    card.appendChild(meta);
+
+    // 是正前後タイトル行
     const titleRow=document.createElement('div');
     titleRow.className='photo-title-row';
     titleRow.innerHTML='<div class="photo-title-cell">是　正　前</div><div class="photo-title-cell">是　正　後</div>';
@@ -454,39 +702,21 @@ function renderReportScreen(){
 
     // 写真ペア行
     item.pairs.forEach((pair,pairIdx)=>{
-      const pairDiv=document.createElement('div');
-      pairDiv.className='pair-row';
-
-      // ペア行ヘッダー（削除ボタン）
+      const pairDiv=document.createElement('div');pairDiv.className='pair-row';
       if(item.pairs.length>1){
-        const pairHdr=document.createElement('div');
-        pairHdr.style.cssText='display:flex;justify-content:flex-end;padding:2px 8px;background:#fafafa;border-bottom:0.5px solid #f0f0f0';
-        const delRow=document.createElement('button');
-        delRow.style.cssText='font-size:10px;color:#cc4444;background:none;border:none;cursor:pointer;padding:2px 4px';
-        delRow.textContent='🗑 この行を削除';
-        delRow.onclick=()=>{
-          item.pairs.splice(pairIdx,1);
-          renderReportScreen();saveLocal();
-        };
-        pairHdr.appendChild(delRow);
-        pairDiv.appendChild(pairHdr);
+        const ph=document.createElement('div');ph.className='pair-row-header';
+        const db=document.createElement('button');db.className='del-row-btn';db.textContent='🗑 この行を削除';
+        db.onclick=()=>{item.pairs.splice(pairIdx,1);renderReportScreen();saveLocal()};
+        ph.appendChild(db);pairDiv.appendChild(ph);
       }
-
-      // 写真グリッド
-      const grid=document.createElement('div');
-      grid.className='photos-grid';
-
+      const grid=document.createElement('div');grid.className='photos-grid';
       ['before','after'].forEach(side=>{
-        const slot=document.createElement('div');
-        slot.className='photo-slot';
-        const img=pair[side];
-        const isUrl=pair[side+'IsUrl'];
+        const slot=document.createElement('div');slot.className='photo-slot';
+        const img=pair[side];const isUrl=pair[side+'IsUrl'];
         if(img){
-          const imgEl=document.createElement('img');
-          imgEl.src=img;imgEl.alt=side==='before'?'是正前':'是正後';
-          slot.appendChild(imgEl);
-          if(isUrl){const ab=document.createElement('span');ab.className='at-badge-photo';ab.textContent='Airtable';slot.appendChild(ab)}
-          const chkEl=document.createElement('span');chkEl.className='photo-check';chkEl.textContent='✓';slot.appendChild(chkEl);
+          const imgEl=document.createElement('img');imgEl.src=img;imgEl.alt=side==='before'?'是正前':'是正後';slot.appendChild(imgEl);
+          if(isUrl){const ab=document.createElement('span');ab.className='at-photo-badge';ab.textContent='Airtable';slot.appendChild(ab)}
+          const ck=document.createElement('span');ck.className='photo-check';ck.textContent='✓';slot.appendChild(ck);
         }else{
           slot.innerHTML=`<div class="photo-empty"><div class="icon">📷</div><span>${side==='before'?'是正前':'是正後'}</span></div>`;
         }
@@ -494,34 +724,21 @@ function renderReportScreen(){
         grid.appendChild(slot);
       });
       pairDiv.appendChild(grid);
-
-      // コメント行
-      const cmtGrid=document.createElement('div');
-      cmtGrid.className='comment-grid';
+      const cmtGrid=document.createElement('div');cmtGrid.className='comment-grid';
       ['before','after'].forEach(side=>{
-        const cell=document.createElement('div');
-        cell.className='comment-cell';
-        const ta=document.createElement('textarea');
-        ta.rows=2;
+        const cell=document.createElement('div');cell.className='comment-cell';
+        const ta=document.createElement('textarea');ta.rows=2;
         ta.value=pair[side+'Comment']||'';
         ta.placeholder=side==='before'?'指摘内容：':'是正内容：';
         ta.oninput=()=>{pair[side+'Comment']=ta.value;saveLocal()};
-        cell.appendChild(ta);
-        cmtGrid.appendChild(cell);
+        cell.appendChild(ta);cmtGrid.appendChild(cell);
       });
       pairDiv.appendChild(cmtGrid);
       card.appendChild(pairDiv);
     });
-
-    // 写真行追加ボタン
-    const addBtn=document.createElement('button');
-    addBtn.className='add-pair-btn';
-    addBtn.textContent='＋ 写真行を追加';
+    const addBtn=document.createElement('button');addBtn.className='add-pair-btn';addBtn.textContent='＋ 写真行を追加';
     addBtn.onclick=()=>{
-      item.pairs.push({
-        before:null,beforeIsUrl:false,beforeComment:`指摘内容：${item.shitekiContent}`,
-        after:null,afterIsUrl:false,afterComment:`是正内容：${item.zeseiContent}`,
-      });
+      item.pairs.push({before:null,beforeIsUrl:false,after:null,afterIsUrl:false,beforeComment:`指摘内容：${item.shitekiContent}`,afterComment:`是正内容：${item.zeseiContent}`});
       renderReportScreen();saveLocal();
     };
     card.appendChild(addBtn);
@@ -529,16 +746,7 @@ function renderReportScreen(){
   });
 }
 
-function updateSelectedCount(){
-  const n=items.filter(i=>i.selected).length;
-  document.getElementById('selectedCount').textContent=`${items.length}件取得　${n}件選択中（出力対象）`;
-}
-
-document.getElementById('backBtn').onclick=()=>showScreen('searchScreen');
-document.getElementById('selectAllBtn').onclick=()=>{items.forEach(i=>i.selected=true);renderReportScreen();saveLocal()};
-document.getElementById('deselectAllBtn').onclick=()=>{items.forEach(i=>i.selected=false);renderReportScreen();saveLocal()};
-
-// ===== 写真シート =====
+// 写真シート
 function openPhotoSheet(itemIdx,pairIdx,side){
   activeSlot={itemIdx,pairIdx,side};
   const pair=items[itemIdx].pairs[pairIdx];
@@ -564,248 +772,185 @@ async function handleFile(file){
   items[itemIdx].pairs[pairIdx][side]=compressed;
   items[itemIdx].pairs[pairIdx][side+'IsUrl']=false;
   renderReportScreen();saveLocal();
-  document.getElementById('fileCamera').value='';
-  document.getElementById('fileGallery').value='';
+  document.getElementById('fileCamera').value='';document.getElementById('fileGallery').value='';
 }
 document.getElementById('fileCamera').onchange=e=>handleFile(e.target.files[0]);
 document.getElementById('fileGallery').onchange=e=>handleFile(e.target.files[0]);
 
-// ===== Airtableに保存 =====
+// ===== Airtableに保存（テキスト編集＋写真） =====
 document.getElementById('uploadBtn').onclick=async()=>{
   const s=loadSettings();
   const selected=items.filter(i=>i.selected);
   if(selected.length===0){toast('出力対象を選択してください');return}
   const btn=document.getElementById('uploadBtn');
   btn.classList.add('loading');btn.textContent='⏳…';
-  let count=0;
+  let photoCount=0,textCount=0;
   try{
     for(const item of selected){
+      // テキスト項目の更新（編集があった場合）
+      if(item._dirty){
+        const fields={};
+        if(item.shitekiContent) fields['指摘内容']=item.shitekiContent;
+        if(item.zeseiContent)   fields['是正内容']=item.zeseiContent;
+        if(item.kensaDate)      fields['検査日']=item.kensaDate;
+        if(item.kanryoDate)     fields['完了日']=item.kanryoDate;
+        if(item.progress)       fields['進捗']=item.progress;
+        if(item.gyosha)         fields['業者']=item.gyosha;
+        if(Object.keys(fields).length>0){
+          await atPatch(TBL_SHITEKI,item.recId,fields);
+          item._dirty=false;textCount++;
+        }
+      }
+      // 写真アップロード
+      const toBlob=(dataUrl)=>{
+        const b64=dataUrl.split(',')[1];const mime=dataUrl.match(/data:(.*?);/)[1];
+        const bytes=new Uint8Array(atob(b64).split('').map(c=>c.charCodeAt(0)));
+        return new Blob([bytes],{type:mime});
+      };
+      const upload=async(dataUrl,field)=>{
+        const blob=toBlob(dataUrl);const form=new FormData();
+        const fname=`photo_${Date.now()}.jpg`;
+        form.append('file',blob,fname);form.append('filename',fname);
+        const res=await fetch(`https://content.airtable.com/v0/${BASE_ID}/${item.recId}/${encodeURIComponent(field)}/uploadAttachment`,{method:'POST',headers:{'Authorization':`Bearer ${s.token}`},body:form});
+        if(!res.ok){const eb=await res.json().catch(()=>({}));throw new Error(eb.error?.message||`HTTP ${res.status}`)}
+        photoCount++;
+      };
       for(const pair of item.pairs){
-        const upload=async(dataUrl,field)=>{
-          const b64=dataUrl.split(',')[1];
-          const mime=dataUrl.match(/data:(.*?);/)[1];
-          const bytes=new Uint8Array(atob(b64).split('').map(c=>c.charCodeAt(0)));
-          const blob=new Blob([bytes],{type:mime});
-          const form=new FormData();
-          form.append('file',blob,`photo_${Date.now()}.jpg`);
-          form.append('filename',`photo_${Date.now()}.jpg`);
-          const res=await fetch(`https://content.airtable.com/v0/${BASE_ID}/${item.recId}/${encodeURIComponent(field)}/uploadAttachment`,{method:'POST',headers:{'Authorization':`Bearer ${s.token}`},body:form});
-          if(!res.ok)throw new Error(`${res.status}`);
-          count++;
-        };
         if(pair.before&&!pair.beforeIsUrl) await upload(pair.before,'指摘写真');
         if(pair.after&&!pair.afterIsUrl)   await upload(pair.after,'是正写真');
       }
     }
-    toast(`${count}枚をAirtableに保存しました ✓`);
-  }catch(e){toast('アップロード失敗: '+e.message)}
+    const msgs=[];
+    if(textCount>0) msgs.push(`${textCount}件の情報を更新`);
+    if(photoCount>0) msgs.push(`${photoCount}枚の写真を保存`);
+    toast(msgs.length>0?msgs.join('・')+' ✓':'変更がありませんでした');
+  }catch(e){
+    if(e.message.includes('403')) toast('権限エラー：TokenにATTACHMENT書き込み権限を追加してください');
+    else toast('保存失敗: '+e.message);
+  }
   finally{btn.classList.remove('loading');btn.textContent='🔗 Airtable'}
 };
 
-// ===== CSV出力 =====
+// CSV
 document.getElementById('sheetsBtn').onclick=()=>{
   const selected=items.filter(i=>i.selected);
   if(selected.length===0){toast('出力対象を選択してください');return}
-  const kensaName=selectedKensaName;
   let csv='\uFEFF';
-  csv+=`${kensaName},${todayJP()}\n\n`;
-  csv+='No.,検査名,検査日,進捗,業者,指摘内容,是正内容,是正前写真URL,是正後写真URL\n';
+  csv+=`${selectedKensaName},${todayJP()}\n\n`;
+  csv+='No.,指摘内容,是正内容,検査日,完了日,進捗,業者,是正前写真URL,是正後写真URL\n';
   selected.forEach((item,i)=>{
     const atBUrl=item.pairs[0]?.beforeIsUrl?item.pairs[0].before:'';
     const atAUrl=item.pairs[0]?.afterIsUrl?item.pairs[0].after:'';
-    csv+=`${i+1},"${selectedKensaName}","${item.kensaDate}","${item.progress}","${item.gyosha}","${item.shitekiContent.replace(/"/g,'""')}","${item.zeseiContent.replace(/"/g,'""')}","${atBUrl}","${atAUrl}"\n`;
+    csv+=`${i+1},"${selectedKensaName}","${item.shitekiContent.replace(/"/g,'""')}","${item.zeseiContent.replace(/"/g,'""')}","${item.kensaDate}","${item.kanryoDate}","${item.progress}","${item.gyosha}","${atBUrl}","${atAUrl}"\n`;
   });
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  const safeKensa=kensaName.replace(/[\\/:*?"<>|　]/g,'_');
-  a.href=url;a.download=`${safeKensa}_${todayStr()}.csv`;a.click();
-  URL.revokeObjectURL(url);
-  toast('CSVを保存しました');
+  a.href=url;a.download=`${selectedKensaName}_${todayStr()}.csv`;a.click();
+  URL.revokeObjectURL(url);toast('CSVを保存しました');
 };
 
-// ===== PDF出力 =====
+// PDF
 document.getElementById('pdfBtn').onclick=async()=>{
   const selected=items.filter(i=>i.selected);
   if(selected.length===0){toast('出力対象を選択してください');return}
   const btn=document.getElementById('pdfBtn');
   btn.classList.add('loading');btn.textContent='⏳…';
   toast('PDF生成中…しばらくお待ちください',10000);
-
   try{
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'px',format:'a4',orientation:'portrait'});
     const pw=doc.internal.pageSize.getWidth();
     const ph=doc.internal.pageSize.getHeight();
     const render=document.getElementById('pdfRender');
-
-    // ページ分割：1ページに何指摘入るか
-    // 各指摘 = ヘッダー+タイトル行 + pairs×(写真行+コメント行)
-    // 写真高さ≒180px、コメント≒20px、ヘッダー≒24px、タイトル行≒20px
-    // A4高さ1123px、上下余白計56px → 有効1067px
-    // 1対 = 224px、1ページ約4対
     const PAIRS_PER_PAGE=3;
-
-    // 全ペアを平坦化
     const allPairs=[];
     selected.forEach(item=>{
-      item.pairs.forEach((pair,pi)=>{
-        allPairs.push({item,pair,pairIdx:pi,isFirst:pi===0,isLast:pi===item.pairs.length-1});
-      });
+      item.pairs.forEach((pair,pi)=>{allPairs.push({item,pair,pairIdx:pi})});
     });
-
-    // ページ分割
     const pages=[];
     for(let i=0;i<allPairs.length;i+=PAIRS_PER_PAGE) pages.push(allPairs.slice(i,i+PAIRS_PER_PAGE));
-
-    const kensaNameForTitle=selectedKensaName;
-    const today=todayJP();
 
     for(let pi=0;pi<pages.length;pi++){
       const pageRows=pages[pi];
       render.innerHTML='';
-      const pageDiv=document.createElement('div');
-      pageDiv.className='pdf-page';
+      const pageDiv=document.createElement('div');pageDiv.className='pdf-page';
+      const mt=document.createElement('div');mt.className='pdf-main-title';mt.textContent='是　正　写　真';pageDiv.appendChild(mt);
+      const st=document.createElement('div');st.className='pdf-sub-title';st.textContent=`${selectedKensaName}　${todayJP()}`;pageDiv.appendChild(st);
 
-      // ページヘッダー
-      const mainTitle=document.createElement('div');
-      mainTitle.className='pdf-main-title';
-      mainTitle.textContent='是　正　写　真';
-      pageDiv.appendChild(mainTitle);
-
-      const subTitle=document.createElement('div');
-      subTitle.className='pdf-sub-title';
-      subTitle.textContent=`${kensaNameForTitle}　${today}`;
-      pageDiv.appendChild(subTitle);
-
-      // 1ページ目かどうかで「是正前/是正後」タイトル行を最初の指摘にのみ表示
-      const isFirstPage=(pi===0);
-      let currentRecId=null;
-      let recDiv=null;
-
+      let currentRecId=null;let recDiv=null;
       pageRows.forEach(row=>{
         const{item,pair}=row;
         const globalIdx=selected.indexOf(item)+1;
-
-        // 新しい指摘 → 指摘ブロック作成
         if(item.recId!==currentRecId){
           currentRecId=item.recId;
-          recDiv=document.createElement('div');
-          recDiv.className='pdf-rec';
-
-          // ヘッダー：No.番号 ＋ フリーコメント欄
-          const recHdr=document.createElement('div');
-          recHdr.className='pdf-rec-header';
-          const numEl=document.createElement('span');
-          numEl.className='pdf-rec-header-num';
-          numEl.textContent=`No.${globalIdx}`;
-          const cmtEl=document.createElement('span');
-          cmtEl.className='pdf-rec-header-comment';
-          cmtEl.textContent=item.headerComment||'';
-          recHdr.appendChild(numEl);
-          recHdr.appendChild(cmtEl);
-          recDiv.appendChild(recHdr);
-
-          // 「是正前/是正後」タイトル行：全指摘ブロックに付与
-          const titleRow=document.createElement('div');
-          titleRow.className='pdf-photo-title-row';
+          recDiv=document.createElement('div');recDiv.className='pdf-rec';
+          const rh=document.createElement('div');rh.className='pdf-rec-header';
+          const rn=document.createElement('span');rn.className='pdf-rec-header-num';rn.textContent=`No.${globalIdx}`;
+          const rc=document.createElement('span');rc.className='pdf-rec-header-comment';rc.textContent=item.headerComment||'';
+          rh.appendChild(rn);rh.appendChild(rc);recDiv.appendChild(rh);
+          // メタ情報行
+          // メタ情報行は削除（写真下に移動）
+          const tr=document.createElement('div');tr.className='pdf-photo-title-row';
           const t1=document.createElement('div');t1.className='pdf-photo-title-cell';t1.textContent='是正前';
           const t2=document.createElement('div');t2.className='pdf-photo-title-cell';t2.textContent='是正後';
-          titleRow.appendChild(t1);titleRow.appendChild(t2);
-          recDiv.appendChild(titleRow);
+          tr.appendChild(t1);tr.appendChild(t2);recDiv.appendChild(tr);
           pageDiv.appendChild(recDiv);
         }
-
-        // 写真行（aspect-ratioで自然なサイズ、引き伸ばしなし）
-        const pairDiv=document.createElement('div');
-        pairDiv.className='pdf-pair';
-
-        const photosRow=document.createElement('div');
-        photosRow.className='pdf-photos-row';
+        const pairDiv=document.createElement('div');pairDiv.className='pdf-pair';
+        const pr=document.createElement('div');pr.className='pdf-photos-row';
         ['before','after'].forEach(side=>{
-          const cell=document.createElement('div');
-          cell.className='pdf-photo-cell';
-          if(pair[side]){
-            const img=document.createElement('img');
-            img.src=pair[side];
-            img.crossOrigin='anonymous';
-            img.style.cssText='width:100%;aspect-ratio:4/3;object-fit:cover;display:block';
-            cell.appendChild(img);
-          }else{
-            const empty=document.createElement('div');
-            empty.className='pdf-photo-empty';
-            empty.textContent='（写真なし）';
-            cell.appendChild(empty);
-          }
-          photosRow.appendChild(cell);
+          const cell=document.createElement('div');cell.className='pdf-photo-cell';
+          if(pair[side]){const img=document.createElement('img');img.src=pair[side];img.crossOrigin='anonymous';img.style.cssText='width:100%;aspect-ratio:4/3;object-fit:cover;display:block';cell.appendChild(img)}
+          else{const em=document.createElement('div');em.className='pdf-photo-empty';em.textContent='（写真なし）';cell.appendChild(em)}
+          pr.appendChild(cell);
         });
-        pairDiv.appendChild(photosRow);
-
+        pairDiv.appendChild(pr);
+        // 検査日・完了日行（写真の直下）
+        const dr=document.createElement('div');dr.className='pdf-date-row';
+        const dc1=document.createElement('div');dc1.className='pdf-date-cell';
+        dc1.textContent=item.kensaDate?`検査日：${item.kensaDate}`:'検査日：';
+        const dc2=document.createElement('div');dc2.className='pdf-date-cell';
+        dc2.textContent=item.kanryoDate?`完了日：${item.kanryoDate}`:'完了日：';
+        dr.appendChild(dc1);dr.appendChild(dc2);
+        pairDiv.appendChild(dr);
         // コメント行
-        const cmtRow=document.createElement('div');
-        cmtRow.className='pdf-comment-row';
+        const cr=document.createElement('div');cr.className='pdf-comment-row';
         ['before','after'].forEach(side=>{
-          const cell=document.createElement('div');
-          cell.className='pdf-comment-cell';
-          cell.textContent=pair[side+'Comment']||'';
-          cmtRow.appendChild(cell);
+          const cc=document.createElement('div');cc.className='pdf-comment-cell';cc.textContent=pair[side+'Comment']||'';cr.appendChild(cc);
         });
-        pairDiv.appendChild(cmtRow);
-        recDiv.appendChild(pairDiv);
+        pairDiv.appendChild(cr);recDiv.appendChild(pairDiv);
       });
-
-      // ページ番号
-      const pageNum=document.createElement('div');
-      pageNum.className='pdf-page-num';
-      pageNum.textContent=`${pi+1} / ${pages.length}`;
-      pageDiv.appendChild(pageNum);
-
+      const pn=document.createElement('div');pn.className='pdf-page-num';pn.textContent=`${pi+1} / ${pages.length}`;pageDiv.appendChild(pn);
       render.appendChild(pageDiv);
-
       const canvas=await html2canvas(pageDiv,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false});
-      const isLastPage=(pi===pages.length-1);
+      const isLast=pi===pages.length-1;
       if(pi>0) doc.addPage();
-      if(isLastPage && pageRows.length < PAIRS_PER_PAGE){
-        // 最終ページは実際の高さに合わせてPDFに配置（引き伸ばさない）
+      if(isLast&&pageRows.length<PAIRS_PER_PAGE){
         const ratio=canvas.width/canvas.height;
-        const imgH=pw/ratio;
-        doc.addImage(canvas.toDataURL('image/jpeg',0.85),'JPEG',0,0,pw,imgH);
+        doc.addImage(canvas.toDataURL('image/jpeg',0.85),'JPEG',0,0,pw,pw/ratio);
       }else{
         doc.addImage(canvas.toDataURL('image/jpeg',0.85),'JPEG',0,0,pw,ph);
       }
     }
-
     render.innerHTML='';
-    const safeTitle=(kensaNameForTitle).replace(/[\\/:*?"<>|　]/g,'_');
-    doc.save(`${safeTitle}_${todayStr()}.pdf`);
+    doc.save(`${selectedKensaName}_${todayStr()}.pdf`);
     toast('PDFを保存しました ✓');
-  }catch(e){
-    toast('PDF生成エラー: '+e.message);
-    console.error(e);
-  }finally{
-    btn.classList.remove('loading');btn.textContent='📄 PDF';
-  }
+  }catch(e){toast('PDF生成エラー: '+e.message);console.error(e)}
+  finally{btn.classList.remove('loading');btn.textContent='📄 PDF'}
 };
 
-// ===== 起動 =====
-// URLパラメータにtokenがあれば自動保存
+// 起動
 const _urlParams=new URLSearchParams(window.location.search);
 const _urlToken=_urlParams.get('token');
 if(_urlToken){
   saveSettings({token:_urlToken});
-  // URLからtokenを除去（セキュリティ対策）
   window.history.replaceState({},'',window.location.pathname);
-  // 自動的に検索画面へ
-  loadKensaNames();
-  showScreen('searchScreen');
+  loadKensaNames();showScreen('searchScreen');
 }else{
   const _s=loadSettings();
-  if(!_s.token){
-    showScreen('settingsScreen');
-  }else{
-    loadKensaNames();
-    showScreen('searchScreen');
-  }
+  if(!_s.token){showScreen('settingsScreen')}
+  else{loadKensaNames();showScreen('searchScreen')}
 }
 </script>
 </body>
